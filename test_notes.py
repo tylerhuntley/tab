@@ -29,6 +29,20 @@ class Note():
 
         self.frets = self.get_frets()
         
+        
+    def __add__(self, other):
+        try:    
+            return Note(self.value + other)  # adding ints, +1 per semitone
+        except TypeError:
+            return self  # adding anything else has no effect
+    
+
+    def __sub__(self, other):
+        try:
+            return Note(self.value - other)  # subtracting ints, -1 per semitone
+        except TypeError:
+            return self  # subtracting anything else has no effect
+        
 
     def get_name(self):
         ''' Convert integer value to note name.'''
@@ -118,7 +132,8 @@ def num_to_fret(number, tuning=STD_TUNING):
 
 def chord_shape(chord):
     """ Input list of numerical note values
-    Returns list of tuples: (string, fret) """
+    Returns list of tuples: (string, fret) 
+    Should attempt to maximize playability"""
 
 
 if __name__ == '__main__':
