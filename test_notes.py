@@ -26,10 +26,17 @@ class Note():
         elif type(pitch) is str:
             self.name = pitch
             self.value = self.get_value()
+            # Correct case of note name string
+            self.name[-2].lower()
+            self.name[0].upper()
 
         self.frets = self.get_frets()
         
-        
+    
+    def __repr__(self):
+        return f"Note('{self.name}') - Value: {self.value}"
+    
+    
     def __add__(self, other):
         try:    
             return Note(self.value + other)  # adding ints, +1 per semitone
@@ -48,7 +55,8 @@ class Note():
         ''' Convert integer value to note name.'''
         accidental = None
         try:
-            letter = NAME[self.value % 12]
+            letter = NAME[self.value % 12]            
+        # All accidentals are considered sharp, unless explicitly defined as flat
         except KeyError:
             letter = NAME[(self.value % 12) - 1]
             accidental = '#'
