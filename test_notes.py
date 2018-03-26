@@ -21,24 +21,24 @@ class Note():
         and numerical format: middle C/C4 = 0, +/- 1 per half-step '''
         if type(pitch) is int:
             self.value = pitch
-            self.name = self.get_name(self.value)
+            self.name = self.get_name()
 
         elif type(pitch) is str:
             self.name = pitch
-            self.value = self.get_value(self.name.upper())
+            self.value = self.get_value()
 
         self.frets = self.get_frets()
         
 
-    def get_name(self, value):
+    def get_name(self):
         ''' Convert integer value to note name.'''
         accidental = None
         try:
-            letter = NAME[value % 12]
+            letter = NAME[self.value % 12]
         except KeyError:
-            letter = NAME[(value % 12) - 1]
+            letter = NAME[(self.value % 12) - 1]
             accidental = '#'
-        octave = (value // 12) + 4  # Default C4 (middle C) to value 0
+        octave = (self.value // 12) + 4  # Default C4 (middle C) to value 0
         
         if accidental:
             return f'{letter}{accidental}{octave}'
@@ -46,19 +46,19 @@ class Note():
             return f'{letter}{octave}'
     
     
-    def get_value(self, note):
+    def get_value(self):
         ''' Convert note name to integer value.'''
         value = 0        
         try:
-            value += (int(note[-1]) - 4) * 12  # Default C4 to value 0
-            value += VALUE[note[0]]
-            if len(note) == 3:
-                value += ACCIDENTAL[note[1]]
+            value += (int(self.name[-1]) - 4) * 12  # Default C4 to value 0
+            value += VALUE[self.name[0].upper()]
+            if len(self.name) == 3:
+                value += ACCIDENTAL[self.name[1].lower()]
         except KeyError:
-            print("Invalid note: ", note)
+            print("Invalid note: ", self.name)
             return None
         except ValueError:
-            print("Invalid note: ", note)
+            print("Invalid note: ", self.name)
             return None
         return value
     
