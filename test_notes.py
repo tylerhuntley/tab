@@ -6,7 +6,6 @@ DROP_D_TUNING = [-2, 5, 10, 15, 19, 24]
 LETTERS = 'CDEFGAB'
 VALUES = (0, 2, 4, 5, 7, 9, 11)
 VALUE, NAME = {}, {}
-
 for l, v in zip(LETTERS, VALUES):
     VALUE[l] = v
     NAME[v] = l
@@ -68,7 +67,7 @@ class Note():
         frets = []
         for string, value in enumerate(tuning):
             if self.value >= LOW_E + value:
-                fret = self.value - LOW_E + value
+                fret = self.value - LOW_E - value
                 frets.append((string, fret))
         return frets
 
@@ -117,9 +116,32 @@ def num_to_fret(number, tuning=STD_TUNING):
     return options
 
 
-def chord_fingering(chord):
+def chord_shape(chord):
     """ Input list of numerical note values
     Returns list of tuples: (string, fret) """
+
+
+if __name__ == '__main__':
+    
+    # Tests for Note() methods
+    e = Note(-8)
+    assert e.name == 'E3'
+    assert e.value == -8
+    assert e.frets == [(0,0)]
+    
+    e2 = Note('E3')
+    assert e2.value == -8
+    assert e2.name == 'E3'
+    assert e2.frets == [(0,0)]
+    
+#    # Tests for future chord_shape()
+#    # Test the low F, the only note with a single valid fingering option
+#    assert chord_shape([-7]) == (0, 1)
+#    
+#    # Test a basic open E chord
+#    open_e_notes = [-8, -1, 4, 7, 11, 16]
+#    open_e_frets = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+#    assert chord_shape(open_e_notes) == open_e_frets
     
     
     
