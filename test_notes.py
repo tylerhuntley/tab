@@ -46,9 +46,11 @@ class Note():
 
     def __sub__(self, other):
         try:
-            return Note(self.value - other)  # subtracting ints, -1 per semitone
+            return Note(self.value - other)  # subtracting ints yields a Note, -1 per semitone
         except TypeError:
-            return self  # subtracting anything else has no effect
+            return self.value - other.value  # subtracting Notes yields an interval value
+        else:
+            return self  # otherwise no effect
         
 
     def get_name(self):
