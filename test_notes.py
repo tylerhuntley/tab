@@ -113,8 +113,14 @@ class Chord():
         for shape in it.product(*[note.frets for note in self.notes]):
             # Eliminate those that play two or more notes on one string
             if len({i[0] for i in shape}) == len([i[0] for i in shape]):
-                self.shapes.append(shape)
-        self.shapes.sort()
+                self.shapes.append(sorted(shape))
+#        self.shapes.sort()
+
+
+    @ property
+    def shape(self):
+        # Need  to implement a way to pick the best option from self.shapes
+        return self.shapes[0]
 
 
 def chord_shape(values):
@@ -180,15 +186,29 @@ if __name__ == '__main__':
     assert e2.name == 'E3'
     assert e2.frets == [(0,0)]
     
-#    # Tests for future chord_shape()
-#    # Test the low F, the only note with a single valid fingering option
-#    assert chord_shape([-7]) == (0, 1)
-#    
-#    # Test a basic open E chord
+#    # Test some basic open chords
     open_e_notes = [-8, -1, 4, 8, 11, 16]
-    open_e_frets = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+    open_e_shape = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
     open_e = Chord(open_e_notes)
-    assert open_e.shape == open_e_frets
     
+    open_a_notes = [-8, -3, 4, 9, 13, 16]
+    open_a_shape = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
+    open_a = Chord(open_a_notes)
     
+    open_d_notes = [-3, 2, 9, 14, 18]
+    open_d_shape = [(1,0), (2,0), (3,2), (4,3), (5,2)]
+    open_d = Chord(open_d_notes)
     
+    open_g_notes = [-5, -1, 2, 7, 11, 19]
+    open_g_shape = [(0, 3), (1,2), (2,0), (3,0), (4,0), (5,3)]
+    open_g = Chord(open_g_notes)
+    
+    open_c_notes = [0, 4, 7, 12, 16]
+    open_c_shape = [(1,3), (2,2), (3,0), (4,1), (5,0)]
+    open_c = Chord(open_c_notes)
+    
+    assert open_e.shape == open_e_shape
+    assert open_a.shape == open_a_shape
+    assert open_d.shape == open_d_shape
+    assert open_g.shape == open_g_shape
+    assert open_c.shape == open_c_shape
