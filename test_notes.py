@@ -1,3 +1,5 @@
+import itertools as it
+
 LOW_E = -8
 MIDDLE_C = 0
 STD_TUNING = [0, 5, 10, 15, 19, 24]  # Intervals of each string in EADGBE tuning
@@ -96,6 +98,25 @@ class Note():
         return frets
 
 
+class Chord():
+    def __init__(self, note_list):
+        self.notes = []
+        self.shapes = []
+        
+        for note in set(note_list):
+            if isinstance(note, Note):
+                self.notes.append(note)
+            else:
+                self.notes.append(Note(note))
+        
+        # Generate all possible fingering combinations
+        for shape in it.product(*[note.frets for note in self.notes]):
+            # Eliminate those that play two or more notes on one string
+            if len({i[0] for i in shape}) == len([i[0] for i in shape]):
+                self.shapes.append(shape)
+        self.shapes.sort()
+
+
 def chord_shape(values):
     """ Input list of numerical note values
     Returns list of tuples: (string, fret) 
@@ -166,7 +187,8 @@ if __name__ == '__main__':
 #    # Test a basic open E chord
     open_e_notes = [-8, -1, 4, 8, 11, 16]
     open_e_frets = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
-    assert chord_shape(open_e_notes) == open_e_frets
+    open_e = Chord(open_e_notes)
+    assert open_e.shape == open_e_frets
     
     
     
