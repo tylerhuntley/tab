@@ -121,10 +121,10 @@ class Chord():
     def shape(self):
         # Need  to implement a way to pick the best option from self.shapes
 #        return self.shapes[0]
-        sums = self.fret_sum()
-        capo = min(sums.keys())
-        return sums[capo][0]
-        
+        sums = self.span_sum()
+        lowest = min(sums.keys())
+        return sums[lowest][0]
+
 
     def fret_sum(self):
         '''Sum the absolute fret values of each note in each shape
@@ -132,6 +132,20 @@ class Chord():
         result = {}
         for shape in self.shapes:
             total = sum(i[1] for i in shape)
+            try:
+                result[total].append(shape)
+            except KeyError:
+                result[total] = [shape]
+        return result
+    
+    
+    def span_sum(self):
+        '''Sum the difference of each fret and the lowest fret in a shape
+        Return a dict of total span mapped to lists of shapes'''
+        result = {}
+        for shape in self.shapes:
+            capo =  min(i[1] for i in shape)
+            total = sum(i[1] - capo for i in shape)
             try:
                 result[total].append(shape)
             except KeyError:
