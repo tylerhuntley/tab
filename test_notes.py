@@ -120,7 +120,23 @@ class Chord():
     @ property
     def shape(self):
         # Need  to implement a way to pick the best option from self.shapes
-        return self.shapes[0]
+#        return self.shapes[0]
+        sums = self.fret_sum()
+        capo = min(sums.keys())
+        return sums[capo][0]
+        
+
+    def fret_sum(self):
+        '''Sum the absolute fret values of each note in each shape
+        Return a dict of total fret values mapped to lists of shapes'''
+        result = {}
+        for shape in self.shapes:
+            total = sum(i[1] for i in shape)
+            try:
+                result[total].append(shape)
+            except KeyError:
+                result[total] = [shape]
+        return result
 
 
 def chord_shape(values):
