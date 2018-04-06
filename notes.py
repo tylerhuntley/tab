@@ -160,56 +160,6 @@ class Chord():
         return result
 
 
-def chord_shape(values):
-    """ Input list of numerical note values
-    Returns list of tuples: (string, fret) 
-    Should attempt to maximize playability"""
-    
-    # Can't play more than six notes at once
-    if len(values) > 6:
-        return None  # Or should it cull randomly to six?
-
-    def use_string(string):
-        ''' Eliminate all note options on a given string.'''
-        for k, v in options.items():
-            if v[0] == string:
-                options[k].remove(v)
-    
-    notes = [Note(value) for value in values]
-    shape = {}
-    options = {}
-    used_strings = set()
-    lowest_fret = min(fret[1] for note in notes for fret in note.frets)
-    
-    for note in notes:
-        options[note] = note.frets
-        # Add any notes playable at lowest_fret to shape
-        for fret in note.frets:
-            if fret[1] == lowest_fret and not fret[0] in used_strings:
-                shape[note] = fret
-                # Remove other options for that note, and all other notes on that string
-                del options[note]
-                use_string(fret[0])
-    
-    while len(shape) < len(notes):
-        for note, frets in options.copy().items():
-            for fret in frets:
-                # Prefer lower frets if possible
-                if note in shape:
-                    if fret[1] < shape[note][1]:
-                        shape[note] = fret
-                        use_string(fret[0])
-                        del options[note]
-                        break
-                else:
-                    shape[note] = fret
-                    use_string(fret[0])
-                    
-            
-    print(sorted(list(shape.values())))
-    return sorted(list(shape.values()))
-
-
 if __name__ == '__main__':
     
     # Tests for Note() methods
