@@ -51,7 +51,14 @@ class Note():
             return self.value - other.value  # subtracting Notes yields an interval value
         else:
             return self  # otherwise no effect
-        
+    
+    
+    def get_next_fret(self, capo):
+        '''Return fret with the lowest value still greater than capo'''
+        for fret in self.frets[::-1]:  # Assumes frets are sorted by string
+            if fret[1] > capo:
+                return fret            
+    
 
     def get_name(self):
         ''' Convert integer value to note name.'''
