@@ -40,8 +40,11 @@ class Bar():
         '''Receives a list of tuples: (string, fret)
         Duration should be that of the shortest note in the list
         Modifies self.lines in place and returns nothing'''
-        # Must also account for duration somehow, so next note doesn't follow 
-        # too close, and starting time, so this one isn't placed too far up            
+        
+        # Add placeholder notes to fill up empty lines
+        for i in range(6):
+            if i not in [note[0] for note in notes]:
+                notes.append((i, ''))
         for note in notes:
             n = 5 - note[0]  # String and line numbers are inverse
             line = ''
