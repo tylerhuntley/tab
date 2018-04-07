@@ -22,20 +22,19 @@ class Bar():
     numerical note symbols on the appropriate lines'''
     def __init__(self):
         self.lines = [f'|{"-" * CHARS_PER_BAR}|']*6
-    
-    
+
+
+    def __repr__(self):
+        return '\n'.join(self.lines)+'\n'
+
+
     def add_note(self, note):
         '''Receives a tuple: (string, fret)
         Modifies self.lines in place and returns nothing'''
         # Must also account for duration somehow, so next note doesn't follow 
         # too close, and starting time, so this one isn't placed too far up
-        
 
-    def display(self):    
-        for line in self.lines:
-            print(line)
 
-    
 class Staff():
     '''Manages concatenation of bars into a singular staffline'''
     def __init__(self, bar=None):
@@ -46,20 +45,19 @@ class Staff():
                 self.add_bar(bar)
         else:
             self.bars = []
-    
-    
+
+
+    def __repr__(self):
+        return '\n'.join(self.lines)+'\n'
+
+
     def add_bar(self, bar):
         self.bars.append(bar)  # Keep a running list of Bar() objects
         for i, line in enumerate(bar.lines):
             try:
                 self.lines[i] += line[1:]  # Avoid duplicating '|' symbols
             except IndexError:
-                self.lines.append(line)
-                
-            
-    def display(self):
-        for line in self.lines:
-            print(line)            
+                self.lines.append(line)                          
 
 
 class Tab():
@@ -68,32 +66,26 @@ class Tab():
         self.staffs = []
 
 
+    def __repr__(self):
+        return '\n'.join(str(staff) for staff in self.staffs)
+
+
     def add_bar(self, bar):
         '''Add bar to last staff, wrap to new staff if past MAX_LENGTH'''
         if self.staffs == [] or (len(self.staffs[-1].lines[0]) >= MAX_WIDTH):
             self.staffs.append(Staff())
         self.staffs[-1].add_bar(bar)
 
-            
-    def display(self):
-        print('Tab.display()')
-        for staff in self.staffs:
-            staff.display()
-            print()
-
 
 if __name__ == '__main__':
     bar = Bar()
+    print('Bar:\n' + str(bar))
     staff = Staff()
     for i in range(3):
-        print(f'Staff bars: {i}')
-        staff.display()
+        print(f'Staff bars: {i}\n' + str(staff))
         staff.add_bar(bar)
-        print()        
         
     tab = Tab()
-    for i in range(5):
-        print(f'Tab bars: {i}')
-        tab.display()
+    for i in range(4):
+        print(f'Tab bars: {i}\n' + str(tab))
         tab.add_bar(bar)
-        print()
