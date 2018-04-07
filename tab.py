@@ -79,10 +79,7 @@ class Staff():
         self.lines = []
         self.bars = []
         if bar:
-            for bar in self.bars:
-                self.add_bar(bar)
-        else:
-            self.bars = []
+            self.add_bar(bar)
 
 
     def __repr__(self):
