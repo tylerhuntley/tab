@@ -36,14 +36,36 @@ class Bar():
         return '\n'.join(self.lines)+'\n'
 
 
-    def add_note(self, notes, duration):
+    def add_notes(self, notes, duration):
         '''Receives a list of tuples: (string, fret)
         Duration should be that of the shortest note in the list
         Modifies self.lines in place and returns nothing'''
         # Must also account for duration somehow, so next note doesn't follow 
         # too close, and starting time, so this one isn't placed too far up            
-
-
+        for note in notes:
+            n = 5 - note[0]  # String and line numbers are inverse
+            line = ''
+            
+            # Copy line verbatim upto first space
+            for c in self.lines[n]:
+                if c == ' ':
+                    break
+                line += c
+            
+            # Add note number and fill with dashes for its duration
+            line += str(note[1])
+            spacing = int(CHARS_PER_BAR * duration) - len(str(note[1]))
+            for i in range(spacing):
+                line += '-'
+            
+            # Refill the rest with spaces and end with a bar
+            while len(line) < len(self.lines[n]) - 1:
+                line += ' '
+            line += '|'
+            
+            self.lines[n] = line
+            
+            
 class Staff():
     '''Manages concatenation of bars into a singular staffline'''
     def __init__(self, bar=None):
