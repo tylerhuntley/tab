@@ -17,7 +17,7 @@ for l, v in zip(LETTERS, VALUES):
 ACCIDENTAL = {'b': -1, '#': 1}
 
 
-class Note():
+class Pitch():
     def __init__(self, pitch):
         ''' Accepts string format: {letter}{#/b}{octave}, e.g. C4, E#2, Ab4
         and numerical format: middle C/C4 = 0, +/- 1 per half-step '''
@@ -41,16 +41,16 @@ class Note():
     
     def __add__(self, other):
         try:    
-            return Note(self.value + other)  # adding ints, +1 per semitone
+            return self.__class__(self.value + other)  # adding ints, +1 per semitone
         except TypeError:
             return self  # adding anything else has no effect
     
 
     def __sub__(self, other):
         try:
-            return Note(self.value - other)  # subtracting ints yields a Note, -1 per semitone
+            return self.__class__(self.value - other)  # subtracting ints, -1 per semitone
         except TypeError:
-            return self.value - other.value  # subtracting Notes yields an interval value
+            return self.value - other.value  # subtraction yields an interval value
         else:
             return self  # otherwise no effect
     
@@ -105,16 +105,34 @@ class Note():
         return frets
 
 
+class Note(Pitch):
+    durations = {'W': 1, 'H': 1/2, 'Q': 1/4, 'E': 1/8, 'S': 1/16, 'T': 1/32}
+    def __init__(self, *args, t='Q', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.duration = self.durations[t]  # Default to quarter notes
+
+    def set_duration(self, t):
+        try:
+            self.duration = self.durations[t]
+        except IndexError:
+            print("Invalid duration: {W|H|Q|E|S|T}. Default to quarter note ('Q')")
+            self.duration = 1/4
+
+
 class Chord():
     def __init__(self, note_list):
         self.notes = []
         self.shapes = []
         
+        # Add notes to list, constructing them first if needed
         for note in set(note_list):
             if isinstance(note, Note):
                 self.notes.append(note)
             else:
                 self.notes.append(Note(note))
+
+        # Store shortest note duration as own
+        self.duration = min(note.duration for note in self.notes)
         
         # Generate all possible fingering combinations
         for shape in it.product(*[note.frets for note in self.notes]):
