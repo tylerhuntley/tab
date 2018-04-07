@@ -16,11 +16,12 @@
 CHARS_PER_BAR = 32  # Probably want this to be dynamic
 MAX_WIDTH = 67  # 64 chars (2 * 32 chars) + 3 bars
 
+
 class Bar():
     '''Manages construction of a single tab measure, and placement of
     numerical note symbols on the appropriate lines'''
     def __init__(self):
-        self.lines = [f'|{"-" * CHARS_PER_BAR}|']*6    
+        self.lines = [f'|{"-" * CHARS_PER_BAR}|']*6
     
     
     def add_note(self, note):
@@ -33,7 +34,7 @@ class Bar():
     def display(self):    
         for line in self.lines:
             print(line)
-            
+
     
 class Staff():
     '''Manages concatenation of bars into a singular staffline'''
@@ -41,7 +42,6 @@ class Staff():
         self.lines = []
         self.bars = []
         if bar:
-            self.bars.append(bar)
             for bar in self.bars:
                 self.add_bar(bar)
         else:
@@ -49,8 +49,7 @@ class Staff():
     
     
     def add_bar(self, bar):
-        self.bars.append(bar)
-        
+        self.bars.append(bar)  # Keep a running list of Bar() objects
         for i, line in enumerate(bar.lines):
             try:
                 self.lines[i] += line[1:]  # Avoid duplicating '|' symbols
@@ -61,13 +60,40 @@ class Staff():
     def display(self):
         for line in self.lines:
             print(line)            
+
+
+class Tab():
+    '''Directs staff concatenation, manages line length/page display'''
+    def __init__(self):
+        self.staffs = []
+
+
+    def add_bar(self, bar):
+        '''Add bar to last staff, wrap to new staff if past MAX_LENGTH'''
+        if self.staffs == [] or (len(self.staffs[-1].lines[0]) >= MAX_WIDTH):
+            self.staffs.append(Staff())
+        self.staffs[-1].add_bar(bar)
+
             
-            
+    def display(self):
+        print('Tab.display()')
+        for staff in self.staffs:
+            staff.display()
+            print()
+
+
 if __name__ == '__main__':
     bar = Bar()
     staff = Staff()
-    for i in range(4):
+    for i in range(3):
         print(f'Staff bars: {i}')
         staff.display()
         staff.add_bar(bar)
         print()        
+        
+    tab = Tab()
+    for i in range(5):
+        print(f'Tab bars: {i}')
+        tab.display()
+        tab.add_bar(bar)
+        print()
