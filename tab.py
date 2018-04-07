@@ -16,23 +16,32 @@
 CHARS_PER_BAR = 32  # Probably want this to be dynamic
 MAX_WIDTH = 67  # 64 chars (2 * 32 chars) + 3 bars
 
+# Note duration values
+W = 1
+H = 1/2
+Q = 1/4
+E = 1/8
+S = 1/16
+T = 1/32
+
 
 class Bar():
     '''Manages construction of a single tab measure, and placement of
     numerical note symbols on the appropriate lines'''
     def __init__(self):
-        self.lines = [f'|{"-" * CHARS_PER_BAR}|']*6
+        self.lines = [f'|{" " * CHARS_PER_BAR}|']*6
 
 
     def __repr__(self):
         return '\n'.join(self.lines)+'\n'
 
 
-    def add_note(self, note):
-        '''Receives a tuple: (string, fret)
+    def add_note(self, notes, duration):
+        '''Receives a list of tuples: (string, fret)
+        Duration should be that of the shortest note in the list
         Modifies self.lines in place and returns nothing'''
         # Must also account for duration somehow, so next note doesn't follow 
-        # too close, and starting time, so this one isn't placed too far up
+        # too close, and starting time, so this one isn't placed too far up            
 
 
 class Staff():
@@ -48,7 +57,8 @@ class Staff():
 
 
     def __repr__(self):
-        return '\n'.join(self.lines)+'\n'
+        temp = [line.replace(' ', '-') for line in self.lines]
+        return '\n'.join(temp)+'\n'
 
 
     def add_bar(self, bar):
