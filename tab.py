@@ -45,6 +45,7 @@ class Bar():
         for i in range(6):
             if i not in [note[0] for note in notes]:
                 notes.append((i, ''))
+                
         for note in notes:
             n = 5 - note[0]  # String and line numbers are inverse
             line = ''
@@ -54,12 +55,15 @@ class Bar():
                 if c == ' ':
                     break
                 line += c
+            else:  # No spaces, bar is full
+                break
             
             # Add note number and fill with dashes for its duration
             line += str(note[1])
             spacing = int(CHARS_PER_BAR * duration) - len(str(note[1]))
             for i in range(spacing):
-                line += '-'
+                if len(line) < len(self.lines[n]) -1:  # Don't overfill
+                    line += '-'
             
             # Refill the rest with spaces and end with a bar
             while len(line) < len(self.lines[n]) - 1:
@@ -67,8 +71,8 @@ class Bar():
             line += '|'
             
             self.lines[n] = line
-            
-            
+
+
 class Staff():
     '''Manages concatenation of bars into a singular staffline'''
     def __init__(self, bar=None):
