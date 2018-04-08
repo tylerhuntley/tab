@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from time import time
 import itertools
 import pickle
+import unittest
 
 
 def detect_edges(img, sigma=0.33):
@@ -120,8 +121,28 @@ class Detector():
             last = now
         
         return data
+
+
+class TestLineCounts(unittest.TestCase):
+    def setUp(self):
+        self.detector = Detector()
+        
+    def test_line(self):
+        array = self.detector.line_data['line']
+        counts = [len(lines) for lines in array.values()]
+        self.assertIn(5, counts)
     
+    def test_easy(self):
+        array = self.detector.line_data['easy']
+        counts = [len(lines) for lines in array.values()]
+        self.assertIn(40, counts)
+    
+    def test_hard(self):
+        array = self.detector.line_data['hard']
+        counts = [len(lines) for lines in array.values()]
+        self.assertIn(35, counts)
+
 
 if __name__ == '__main__':
     
-    d = Detector()
+    unittest.main()
