@@ -1,4 +1,5 @@
 import itertools as it
+import unittest
 
 LOW_E = -8
 MIDDLE_C = 0
@@ -178,42 +179,47 @@ class Chord():
         return result
 
 
+class TestNotes(unittest.TestCase):
+    def setUp(self):
+        self.e1 = Note(-8)
+        self.e2 = Note('E3')
+
+    def test_names(self):
+        self.assertEqual(self.e1.name, 'E3')
+        self.assertEqual(self.e2.name, 'E3')
+
+    def test_values(self):
+        self.assertEqual(self.e1.value, -8)
+        self.assertEqual(self.e2.value, -8)
+
+    def test_frets(self):
+        self.assertEqual(self.e1.frets, [(0, 0)])
+        self.assertEqual(self.e2.frets, [(0, 0)])
+
+
+class TestOpenChords(unittest.TestCase):
+    def setUp(self):
+        self.e = Chord([-8, -1, 4, 8, 11, 16])
+        self.a = Chord([-8, -3, 4, 9, 13, 16])
+        self.d = Chord([-3, 2, 9, 14, 18])
+        self.g = Chord([-5, -1, 2, 7, 11, 19])
+        self.c = Chord([0, 4, 7, 12, 16])
+        self.chords = [self.e, self.a, self.d, self.g, self.c]
+
+        self.e_shape = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+        self.a_shape = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
+        self.d_shape = [(1,0), (2,0), (3,2), (4,3), (5,2)]
+        self.g_shape = [(0, 3), (1,2), (2,0), (3,0), (4,0), (5,3)]
+        self.c_shape = [(1,3), (2,2), (3,0), (4,1), (5,0)]
+        self.shapes = [self.e_shape, self.a_shape, self.d_shape,
+                       self.g_shape, self.c_shape]
+
+    def test_shapes(self):
+        for chord, shape in zip(self.chords, self.shapes):
+            with self.subTest(i=chord):
+                self.assertEqual(chord.shape, shape)
+
+
 if __name__ == '__main__':
     
-    # Tests for Note() methods
-    e = Note(-8)
-    assert e.name == 'E3'
-    assert e.value == -8
-    assert e.frets == [(0,0)]
-    
-    e2 = Note('E3')
-    assert e2.value == -8
-    assert e2.name == 'E3'
-    assert e2.frets == [(0,0)]
-    
-#    # Test some basic open chords
-    open_e_notes = [-8, -1, 4, 8, 11, 16]
-    open_e_shape = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
-    open_e = Chord(open_e_notes)
-    
-    open_a_notes = [-8, -3, 4, 9, 13, 16]
-    open_a_shape = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
-    open_a = Chord(open_a_notes)
-    
-    open_d_notes = [-3, 2, 9, 14, 18]
-    open_d_shape = [(1,0), (2,0), (3,2), (4,3), (5,2)]
-    open_d = Chord(open_d_notes)
-    
-    open_g_notes = [-5, -1, 2, 7, 11, 19]
-    open_g_shape = [(0, 3), (1,2), (2,0), (3,0), (4,0), (5,3)]
-    open_g = Chord(open_g_notes)
-    
-    open_c_notes = [0, 4, 7, 12, 16]
-    open_c_shape = [(1,3), (2,2), (3,0), (4,1), (5,0)]
-    open_c = Chord(open_c_notes)
-    
-    assert open_e.shape == open_e_shape
-    assert open_a.shape == open_a_shape
-    assert open_d.shape == open_d_shape
-    assert open_g.shape == open_g_shape
-    assert open_c.shape == open_c_shape
+    unittest.main()
