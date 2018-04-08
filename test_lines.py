@@ -78,12 +78,20 @@ class Detector():
 
         # Load data, if available
         try:
-            self.line_data = np.load(f'{self.data_path}{name}')
+            self.load_data()
         # Generate data, if needed
         except FileNotFoundError:
             self.line_data = self.probe_image()
-            with open(f'data/{name}', 'wb') as f:
-                pickle.dump(self.line_data, f)                
+            self.save_data()
+
+
+    def load_data(self):
+        self.line_data = np.load(f'{self.data_path}{self.name}')
+
+
+    def save_data(self):
+        with open(f'{self.data_path}{self.name}', 'wb') as f:
+            pickle.dump(self.line_data, f)
 
 
     def probe_image(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
