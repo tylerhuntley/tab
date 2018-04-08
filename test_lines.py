@@ -63,43 +63,41 @@ def length(line):
     
 
 class Detector():    
+    image_path = 'static/'
+    data_path = 'data/'
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)      
         
-        # Image file info
+        # Image info
         self.name = name
-        self.image_name = f'static/{name}.png'
+        self.image_name = f'{self.image_path}{name}.png'
         self.image = cv2.imread(self.image_name)
+        self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.inverted = np.invert(self.gray)
 
         # Load data, if available
         try:
-            self.line_data = np.load(f'data/{name}')
+            self.line_data = np.load(f'{self.data_path}{name}')
         # Generate data, if needed
         except FileNotFoundError:
-            self.line_data = self.probe_image(name)
+            self.line_data = self.probe_image()
             with open(f'data/{name}', 'wb') as f:
                 pickle.dump(self.line_data, f)                
 
 
-    def probe_image(self):
-        data = {}
-        # Prepare color-inverted, grayscale array of image data
-        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        inverted = np.invert(gray)
-        
+    def probe_image(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
+        data = {}        
         # For timing purposes
         count = 0
         start = time()
         last = start
         
-        # Parameter initialization
-        min_length = self.image.shape[1] * 0.5
-        params = range(0, 200, 10)
-        gaps = range(0, 100, 5)
-        cycles = len(params) * len(gaps)
-        
+        # Detect lines using different combinations of parameters
+        min_length = int(self.image.shape[1] * 0.5)
+        cycles = len(params) * len(gaps)        
         for (param, max_gap) in itertools.product(params, gaps):
-            lines = detect_lines(inverted, param, min_length, max_gap)
+            lines = detect_lines(self.inverted, param, min_length, max_gap)
             data[(param, max_gap)] = lines
             
             # Timing info
@@ -107,9 +105,9 @@ class Detector():
             now = time()
             print('{}, cycle {} of {}: {:.2f} us, Total: {:.2f} s'.format(
                     self.name, count, cycles, (now - last)*1000, now - start))
-            last = now
-        
+            last = now        
         return data
+
 
     def get_closest_params(self, n):
         result = []
@@ -119,21 +117,22 @@ class Detector():
         # Return the n params that detect the lowest number of lines
         for k, v in self.line_data.items():
             if v is not None and len(v) in counts[:n]:
-                result.append(f'{k} -> {len(v)}')
+                result.append(k)
+                print(f'{self.name}: {k} -> {len(v)}')
         return result
 
 
 class TestLineCounts(unittest.TestCase):        
     def test_line(self):
-        counts = [len(lines) for lines in line.line_data.values()]
+        counts = [len(i) for i in line.line_data.values() if i is not None]
         self.assertIn(5, counts)
     
     def test_easy(self):
-        counts = [len(lines) for lines in easy.line_data.values()]
+        counts = [len(i) for i in easy.line_data.values() if i is not None]
         self.assertIn(40, counts)
     
     def test_hard(self):
-        counts = [len(lines) for lines in hard.line_data.values()]
+        counts = [len(i) for i in hard.line_data.values() if i is not None]
         self.assertIn(35, counts)
 
 
