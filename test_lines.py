@@ -111,6 +111,17 @@ class Detector():
         
         return data
 
+    def get_closest_params(self, n):
+        result = []
+        # Count the number of lines detected by each set of params
+        counts = [len(i) for i in self.line_data.values() if i is not None]
+        counts.sort()
+        # Return the n params that detect the lowest number of lines
+        for k, v in self.line_data.items():
+            if v is not None and len(v) in counts[:n]:
+                result.append(f'{k} -> {len(v)}')
+        return result
+
 
 class TestLineCounts(unittest.TestCase):        
     def test_line(self):
