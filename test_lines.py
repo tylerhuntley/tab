@@ -62,40 +62,28 @@ def length(line):
     
 
 class Detector():    
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)      
         
         # Image file info
-        self.path = 'static/'
-        self.images = ('line', 'easy', 'hard')
-        self.image_names = tuple(f'{self.path}{i}.png' for i in self.images)
-        
-        # Load image files
-        self.image_data = {}
-        for image, name in zip(self.images, self.image_names):
-            self.image_data[image] = cv2.imread(name)
+        self.name = name
+        self.image_name = f'static/{name}.png'
+        self.image = cv2.imread(self.image_name)
 
         # Load data, if available
         try:
-            self.line_data = np.load('data')
+            self.line_data = np.load(f'data/{name}')
         # Generate data, if needed
         except FileNotFoundError:
-            self.line_data = {}
-            for image, name in zip(self.images, self.image_names):
-                if not self.line_data[image]:
-                    self.line_data[image] = self.probe_image(name)
-            with open('data', 'wb') as f:
+            self.line_data = self.probe_image(name)
+            with open(f'data/{name}', 'wb') as f:
                 pickle.dump(self.line_data, f)                
 
 
-    def probe_image(self, filename):
+    def probe_image(self):
         data = {}
         # Prepare color-inverted, grayscale array of image data
-        image = cv2.imread(filename)
-        if image is None:
-            print(f'{filename} not found')
-            return None
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         inverted = np.invert(gray)
         
         # For timing purposes
@@ -104,7 +92,7 @@ class Detector():
         last = start
         
         # Parameter initialization
-        min_length = image.shape[1] * 0.5
+        min_length = self.image.shape[1] * 0.5
         params = range(0, 200, 10)
         gaps = range(0, 100, 5)
         cycles = len(params) * len(gaps)
@@ -116,33 +104,29 @@ class Detector():
             # Timing info
             count += 1
             now = time()
-            print('Cycle {} of {}: {:.2f} us, Total: {:.2f} s'.format(
-                    count, cycles, (now - last)*1000, now - start))
+            print('{}, cycle {} of {}: {:.2f} us, Total: {:.2f} s'.format(
+                    self.name, count, cycles, (now - last)*1000, now - start))
             last = now
         
         return data
 
 
-class TestLineCounts(unittest.TestCase):
-    def setUp(self):
-        self.detector = Detector()
-        
+class TestLineCounts(unittest.TestCase):        
     def test_line(self):
-        array = self.detector.line_data['line']
-        counts = [len(lines) for lines in array.values()]
+        counts = [len(lines) for lines in line.line_data.values()]
         self.assertIn(5, counts)
     
     def test_easy(self):
-        array = self.detector.line_data['easy']
-        counts = [len(lines) for lines in array.values()]
+        counts = [len(lines) for lines in easy.line_data.values()]
         self.assertIn(40, counts)
     
     def test_hard(self):
-        array = self.detector.line_data['hard']
-        counts = [len(lines) for lines in array.values()]
+        counts = [len(lines) for lines in hard.line_data.values()]
         self.assertIn(35, counts)
 
 
 if __name__ == '__main__':
-    
+    line = Detector('line')
+    easy = Detector('easy')
+    hard = Detector('hard')
     unittest.main()
