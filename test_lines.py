@@ -17,8 +17,9 @@ def detect_edges(img, sigma=0.33):
 
 def detect_lines(img, param, min_length, max_gap):
     ''' '''
-    rho, theta = 1, np.pi/180  # distance and angle parameters for accumulator
-    lines = cv2.HoughLinesP(img, rho, theta, param, min_length, max_gap)
+#    rho, theta = 1, np.pi/180  # distance and angle parameters for accumulator
+    lines = cv2.HoughLinesP(img, rho=1, theta=np.pi/180, threshold=param,
+                            minLineLength=min_length, maxLineGap=max_gap)
     return lines
     
     
@@ -97,9 +98,9 @@ class Detector():
         gaps = range(0, 100, 5)
         cycles = len(params) * len(gaps)
         
-        for (param, gap) in itertools.product(params, gaps):
-            lines = detect_lines(inverted, param, min_length, gap)
-            data[(param, gap)] = lines
+        for (param, max_gap) in itertools.product(params, gaps):
+            lines = detect_lines(inverted, param, min_length, max_gap)
+            data[(param, max_gap)] = lines
             
             # Timing info
             count += 1
