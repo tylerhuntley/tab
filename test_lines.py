@@ -21,14 +21,14 @@ def detect_lines(img, param, min_length, max_gap):
     lines = cv2.HoughLinesP(img, rho=1, theta=np.pi/180, threshold=param,
                             minLineLength=min_length, maxLineGap=max_gap)
     return lines
-    
-    
+
+
 def separate_staffs(lines):
     ''' Return list of lists containing the lines of each staff entity
     Currently just counts five lines at a time, should utilize numpy'''
     staffs = []
     for i in range(0, len(lines), 5):
-        staffs.append(lines[i:i + 5])        
+        staffs.append(lines[i:i + 5])
     return staffs
 
 
@@ -55,20 +55,20 @@ def plot(img, gray=False):
     else:
         plt.imshow(img)
     plt.show()
-    
+
 
 def length(line):
     for x1, y1, x2, y2 in line:
         return ((x2 - x1)**2 + (y2 - y1)**2)**0.5
-    
 
-class Detector():    
+
+class Detector():
     image_path = 'static/'
     data_path = 'data/'
 
     def __init__(self, name, *args, **kwargs):
-        super().__init__(*args, **kwargs)      
-        
+        super().__init__(*args, **kwargs)
+
         # Image info
         self.name = name
         self.image_name = f'{self.image_path}{name}.png'
@@ -81,7 +81,7 @@ class Detector():
             self.load_data()
         # Generate data, if needed
         except FileNotFoundError:
-            self.line_data = self.probe_image()
+            self.probe_image()
             self.save_data()
 
 
@@ -95,26 +95,27 @@ class Detector():
 
 
     def probe_image(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
-        data = {}        
         # For timing purposes
         count = 0
         start = time()
         last = start
-        
+
         # Detect lines using different combinations of parameters
         min_length = int(self.image.shape[1] * 0.5)
-        cycles = len(params) * len(gaps)        
+        cycles = len(params) * len(gaps)
         for (param, max_gap) in itertools.product(params, gaps):
+            # Don't repeat detection with duplicate parameters
+            if (param, max_gap) in self.line_data:
+                continue
             lines = detect_lines(self.inverted, param, min_length, max_gap)
-            data[(param, max_gap)] = lines
-            
+            self.line_data[(param, max_gap)] = lines
+
             # Timing info
             count += 1
             now = time()
             print('{}, cycle {} of {}: {:.2f} us, Total: {:.2f} s'.format(
                     self.name, count, cycles, (now - last)*1000, now - start))
-            last = now        
-        return data
+            last = now
 
 
     def get_closest_params(self, n):
@@ -130,15 +131,15 @@ class Detector():
         return result
 
 
-class TestLineCounts(unittest.TestCase):        
+class TestLineCounts(unittest.TestCase):
     def test_line(self):
         counts = [len(i) for i in line.line_data.values() if i is not None]
         self.assertIn(5, counts)
-    
+
     def test_easy(self):
         counts = [len(i) for i in easy.line_data.values() if i is not None]
         self.assertIn(40, counts)
-    
+
     def test_hard(self):
         counts = [len(i) for i in hard.line_data.values() if i is not None]
         self.assertIn(35, counts)
