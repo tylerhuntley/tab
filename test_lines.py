@@ -63,6 +63,7 @@ def length(line):
 
 
 class Detector():
+    key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 40}
     image_path = 'static/'
     data_path = 'data/'
 
@@ -81,6 +82,7 @@ class Detector():
             self.load_data()
         # Generate data, if needed
         except FileNotFoundError:
+            self.line_data = {}
             self.probe_image()
             self.save_data()
 
@@ -131,22 +133,19 @@ class Detector():
         return result
 
 
-class TestLineCounts(unittest.TestCase):
-    def test_line(self):
-        counts = [len(i) for i in line.line_data.values() if i is not None]
-        self.assertIn(5, counts)
+class TestLines(unittest.TestCase):
+    def setUp(self):
+        self.tests = {}
+        for i in Detector.key:
+            self.tests[i] = Detector(i)
 
-    def test_easy(self):
-        counts = [len(i) for i in easy.line_data.values() if i is not None]
-        self.assertIn(40, counts)
-
-    def test_hard(self):
-        counts = [len(i) for i in hard.line_data.values() if i is not None]
-        self.assertIn(35, counts)
+    def test_counts(self):
+        for k, v in self.tests.items():
+            with self.subTest(i=k):
+                counts = [len(i) for i in v.line_data.values() if i is not None]
+                self.assertIn(v.key[k], counts)
 
 
 if __name__ == '__main__':
-    line = Detector('line')
-    easy = Detector('easy')
-    hard = Detector('hard')
+
     unittest.main()
