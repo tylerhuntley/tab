@@ -110,7 +110,8 @@ class Detector():
             if (param, max_gap) in self.line_data:
                 continue
             lines = detect_lines(self.inverted, param, min_length, max_gap)
-            self.line_data[(param, max_gap)] = lines
+            # NoneType has no len(), so use empty tuples for 0 lines instead
+            self.line_data[(param, max_gap)] = () if lines is None else lines
 
             # Timing info
             count += 1
