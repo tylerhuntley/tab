@@ -121,6 +121,15 @@ class Detector():
             last = now
 
 
+    def get_params(self, n):
+        '''Return a list of the params that detect exactly n lines'''
+        params = []
+        for param, lines in self.line_data.items():
+            if len(lines) == n:
+                params.append(param)
+        return params
+
+
     def get_closest_params(self, n):
         result = []
         # Count the number of lines detected by each set of params
