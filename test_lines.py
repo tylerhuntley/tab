@@ -63,7 +63,7 @@ def length(line):
 
 
 class Detector():
-    key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 40}
+    key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20}
     image_path = 'static/'
     data_path = 'data/'
 
@@ -154,6 +154,17 @@ class TestLines(unittest.TestCase):
             with self.subTest(i=k):
                 counts = [len(i) for i in v.line_data.values() if i is not None]
                 self.assertIn(v.key[k], counts)
+
+    def test_common_param(self):
+        sets = []
+        # Gather sets of all params that detect the proper number of lines
+        for k, v in self.tests.items():
+            temp = set(v.get_params(v.key[k]))
+            sets.append(temp)
+            print(k, temp)
+        params = set.intersection(*sets)
+        print(f'Common: {len(params)}\n{params}')
+        self.assertGreaterEqual(len(params), 1)
 
 
 if __name__ == '__main__':
