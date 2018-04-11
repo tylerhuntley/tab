@@ -143,6 +143,37 @@ class Detector():
         return result
 
 
+    def is_horizontal(self, line):
+        (x1, y1, x2, y2) = line
+        return y1 == y2
+
+
+    def is_vertical(self, line):
+        (x1, y1, x2, y2) = line
+        return x1 == x2
+
+
+    def join_h_lines(self, lines):
+        '''Accepts and returns a list of lines as 4-tuples (x1, y1, x2, y2)
+        Combines all collinear horizontal lines, and discards the rest'''
+        temp = {}  # Maps singular y values to 2-tuples of x values
+        for line in lines:
+            (x1, y1, x2, y2) = line
+            if not self.is_horizontal(line):
+                continue
+            if y1 in temp:
+                old = temp[y1]
+                temp[y1] = ( min(x1, x2, *old), max(x1, x2, *old) )
+            else:
+                temp[y1] = (x1, x2)
+
+        # Reformat into 4-tuples for return
+        result = []
+        for y, x in temp.items():
+            result.append((x[0], y, x[1], y))
+        return result
+
+
 class TestLines(unittest.TestCase):
     def setUp(self):
         self.tests = {}
