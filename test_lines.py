@@ -8,8 +8,8 @@ import unittest
 
 
 class Detector():
-    key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 40}
-    exclude = {'rosita', 'sleeves'}
+    key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
+    exclude = {}
     image_path = 'static/'
     data_path = 'data/'
 
@@ -183,7 +183,7 @@ class TestLines(unittest.TestCase):
     def test_counts(self):
         for k, v in self.tests.items():
             with self.subTest(i=k):
-                counts = [len(i) for i in v.line_data.values() if i is not None]
+                counts = {len(i) for i in v.line_data.values()}
                 self.assertIn(v.key[k], counts)
 
     def test_common_param(self):
@@ -192,10 +192,31 @@ class TestLines(unittest.TestCase):
         for k, v in self.tests.items():
             temp = set(v.get_params(v.key[k]))
             sets.append(temp)
-            print(k, temp)
+            print(f'{k}: {len(temp)}\n{temp}')
         params = set.intersection(*sets)
         print(f'Common: {len(params)}\n{params}')
         self.assertGreaterEqual(len(params), 1)
+
+
+@unittest.expectedFailure
+class TestBars(unittest.TestCase):
+    def setUp(self):
+        self.tests = {}
+
+    def test_star(self):
+        self.assertEqual(self.tests['star'].bars, (4, 4, 3))
+
+    def test_sleeves(self):
+        self.assertEqual(self.tests['sleeves'].bars, (8, 8, 9, 8))
+
+    def test_rosita(self):
+        self.assertEqual(self.tests['rosita'].bars, (4, 6, 4, 5, 5, 5, 5))
+
+    def test_line(self):
+        self.assertEqual(self.tests['line'].bars, (5,))
+
+    def test_kumbayah(self):
+        self.assertEqual(self.tests['kumbayah'].bars, (5, 4))
 
 
 if __name__ == '__main__':
