@@ -12,7 +12,7 @@ VALUE, NAME = {}, {}
 for l, v in zip(LETTERS, VALUES):
     VALUE[l] = v
     NAME[v] = l
-    
+
 #VALUE = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 #NAME = {0: 'C', 2:'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 11: 'B'}
 ACCIDENTAL = {'b': -1, '#': 1}
@@ -34,18 +34,18 @@ class Pitch():
             self.name[0].upper()
 
         self.frets = self.get_frets()
-        
-    
+
+
     def __repr__(self):
         return f"Note('{self.name}') - Value: {self.value}"
-    
-    
+
+
     def __add__(self, other):
-        try:    
+        try:
             return self.__class__(self.value + other)  # adding ints, +1 per semitone
         except TypeError:
             return self  # adding anything else has no effect
-    
+
 
     def __sub__(self, other):
         try:
@@ -54,35 +54,35 @@ class Pitch():
             return self.value - other.value  # subtraction yields an interval value
         else:
             return self  # otherwise no effect
-    
-    
+
+
     def get_next_fret(self, capo):
         '''Return fret with the lowest value still greater than capo'''
         for fret in self.frets[::-1]:  # Assumes frets are sorted by string
             if fret[1] > capo:
-                return fret            
-    
+                return fret
+
 
     def get_name(self):
         ''' Convert integer value to note name.'''
         accidental = None
         try:
-            letter = NAME[self.value % 12]            
+            letter = NAME[self.value % 12]
         # All accidentals are considered sharp, unless explicitly defined as flat
         except KeyError:
             letter = NAME[(self.value % 12) - 1]
             accidental = '#'
         octave = (self.value // 12) + 4  # Default C4 (middle C) to value 0
-        
+
         if accidental:
             return f'{letter}{accidental}{octave}'
         else:
             return f'{letter}{octave}'
-    
-    
+
+
     def get_value(self):
         ''' Convert note name to integer value.'''
-        value = 0        
+        value = 0
         try:
             value += (int(self.name[-1]) - 4) * 12  # Default C4 to value 0
             value += VALUE[self.name[0].upper()]
@@ -95,7 +95,7 @@ class Pitch():
             print("Invalid note: ", self.name)
             return None
         return value
-    
+
     def get_frets(self, tuning=STD_TUNING):
         ''' Return list of tuples of possible string and fret combinations'''
         frets = []
@@ -124,7 +124,7 @@ class Chord():
     def __init__(self, note_list):
         self.notes = []
         self.shapes = []
-        
+
         # Add notes to list, constructing them first if needed
         for note in set(note_list):
             if isinstance(note, Note):
@@ -134,7 +134,7 @@ class Chord():
 
         # Store shortest note duration as own
         self.duration = min(note.duration for note in self.notes)
-        
+
         # Generate all possible fingering combinations
         for shape in it.product(*[note.frets for note in self.notes]):
             # Eliminate those that play two or more notes on one string
@@ -163,8 +163,8 @@ class Chord():
             except KeyError:
                 result[total] = [shape]
         return result
-    
-    
+
+
     def span_sum(self):
         '''Sum the difference of each fret and the lowest fret in a shape
         Return a dict of total span mapped to lists of shapes'''
@@ -177,6 +177,34 @@ class Chord():
             except KeyError:
                 result[total] = [shape]
         return result
+
+
+class Hand():
+    ''' Seeks to manage valid placement of fingers via the following axioms:
+    - Open notes are always allowed, as long as the string is not in use.
+    - No finger may occupy a lower fret than any lower-numbered finger.
+    - Fingers may share a fret, if the higher finger is on a higher string.
+    - Finger 0 may barre all strings above its target at the same fret.
+    '''
+    def __init__(self):
+        self.capo = 0
+        self.barre = False
+        self.fingers = {i:() for i in range(4)}
+
+
+    @property
+    def shape(self):
+        temp = []
+        for i in self.fingers.values():
+            if i:
+                temp.append(i)
+        # Add each higher string at index finger's fret
+        if self.barre:
+            for i in range(self.fingers[0][0] + 1, 6):
+                # Don't add string being played by other fingers
+                if i not in [f for f in temp]:
+                    temp.append((i, self.fingers[0][1]))
+        return sorted(temp)
 
 
 class TestNotes(unittest.TestCase):
@@ -221,5 +249,5 @@ class TestOpenChords(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    
+
     unittest.main()
