@@ -126,9 +126,16 @@ class StaffLines(Detector):
         return staffs
 
 
-    def slice_staff():
-        ''' Return image subarray comprising one staff line'''
-        pass
+    def slice_staff(image, lines):
+        ''' Return image subarray comprising one staff line
+        lines is a list of 4-tuples of the form (x1, y1, x2, y2)
+        Currently crops everything outside the stafflines themselves
+        Will need to expand to account for ledger lines'''
+        min_x = min(min(line[0], line[2]) for line in lines)
+        max_x = max(max(line[0], line[2]) for line in lines)
+        min_y = min(min(line[1], line[3]) for line in lines)
+        max_y = max(max(line[1], line[3]) for line in lines)
+        return image[min_y:max_y, min_x:max_x]
 
 
     def get_params(self, n):
