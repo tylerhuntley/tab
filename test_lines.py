@@ -88,26 +88,31 @@ class StaffLines(Detector):
         # Generate data, if needed
         except FileNotFoundError:
             self.line_data = {}
-            self.probe_image()
+            self.probe_range()  # Default range for baseline data
             self.save_data()
 
 
-    def probe_image(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
+    def probe_image(self, param, max_gap):
+        ''' Add a parameter set and its associated lines to image dataset '''
+        min_length = int(self.image.shape[1] * 0.5)
+        # Don't repeat detection with duplicate parameters
+        if (param, max_gap) not in self.line_data:
+            lines = self.detect_lines(self.edges, param, min_length, max_gap)
+        # NoneType has no len(), so use empty tuples for 0 lines instead
+        self.line_data[(param, max_gap)] = () if lines is None else lines
+
+
+    def probe_range(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
+        ''' Probe a range of detection parameters to help find correct lines'''
         # For timing purposes
         count = 0
         start = time()
         last = start
 
-        # Detect lines using different combinations of parameters
-        min_length = int(self.image.shape[1] * 0.5)
+        # Total number of combinations to try
         cycles = len(params) * len(gaps)
         for (param, max_gap) in itertools.product(params, gaps):
-            # Don't repeat detection with duplicate parameters
-            if (param, max_gap) in self.line_data:
-                continue
-            lines = self.detect_lines(self.edges, param, min_length, max_gap)
-            # NoneType has no len(), so use empty tuples for 0 lines instead
-            self.line_data[(param, max_gap)] = () if lines is None else lines
+            self.probe_image(param, max_gap)
 
             # Timing info
             count += 1
