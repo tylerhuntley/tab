@@ -19,6 +19,7 @@ class Detector():
         self.image_name = f'{self.image_path}{name}.png'
         self.image = cv2.imread(self.image_name)
         self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.edges = self.detect_edges(self.gray)
         self.inverted = np.invert(self.gray)
 
 
@@ -104,7 +105,7 @@ class StaffLines(Detector):
             # Don't repeat detection with duplicate parameters
             if (param, max_gap) in self.line_data:
                 continue
-            lines = self.detect_lines(self.inverted, param, min_length, max_gap)
+            lines = self.detect_lines(self.edges, param, min_length, max_gap)
             # NoneType has no len(), so use empty tuples for 0 lines instead
             self.line_data[(param, max_gap)] = () if lines is None else lines
 
@@ -190,9 +191,9 @@ class TestLines(unittest.TestCase):
         sets = []
         # Gather sets of all params that detect the proper number of lines
         for k, v in self.tests.items():
-            temp = set(v.get_params(v.key[k]))
+            temp = set(v.get_params(v.key[k] * 2))  # x2: one line, two edges
             sets.append(temp)
-            print(f'{k}: {len(temp)}\n{temp}')
+            print(f'{k}: {len(temp)}\n')
         params = set.intersection(*sets)
         print(f'Common: {len(params)}\n{params}')
         self.assertGreaterEqual(len(params), 1)
