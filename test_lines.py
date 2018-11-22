@@ -58,13 +58,25 @@ class Detector():
         return cv2.HoughLinesP(img, rho, theta, threshold=param,
                                 minLineLength=min_length, maxLineGap=max_gap)
 
-    @staticmethod
-    def draw_lines(img, lines, color=(255, 0, 0)):
+    def draw_lines(self, img, lines, color=(255, 0, 0)):
         ''' Return image with lines drawn on it in color, default red'''
         result = img.copy()
         for line in lines:
             for x1, y1, x2, y2 in line:
                 cv2.line(result, (x1, y1), (x2, y2), color, 1)
+        return result
+
+    def draw_box(self, img, points, color=(255,0,0)):
+        ''' Draw a rectangle on img, default color red
+        points is the coordinates of opposite corners: (x0, y0, x1, y1)'''
+        result = img.copy()
+        lines = []
+        x0, y0, x1, y1 = points
+        lines.append((x0, y0, x1, y0))
+        lines.append((x1, y0, x1, y1))
+        lines.append((x1, y1, x0, y1))
+        lines.append((x0, y1, x0, y0))
+        self.draw_lines(img, lines, color)
         return result
 
     @staticmethod
