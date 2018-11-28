@@ -8,7 +8,8 @@ import unittest
 
 
 class Detector():
-    key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
+    # key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
+    key = {'line': 10, 'kumbayah': 20, 'star': 30, 'sleeves': 40, 'rosita': 70}  # Doubled values for edged images
     exclude = {}
     image_path = 'static/'
     data_path = 'data/'
@@ -56,7 +57,7 @@ class Detector():
     def detect_lines(img, param, min_length, max_gap):
         rho, theta = 1, np.pi/180
         return cv2.HoughLinesP(img, rho, theta, threshold=param,
-                                minLineLength=min_length, maxLineGap=max_gap)
+                               minLineLength=min_length, maxLineGap=max_gap)
 
     def draw_lines(self, img, lines, color=(255, 0, 0)):
         ''' Return image with lines drawn on it in color, default red'''
@@ -134,7 +135,7 @@ class StaffLines(Detector):
             last = now
 
 
-    def separate_staffs(lines):
+    def separate_staffs(self, lines):
         ''' Return list of lists containing the lines of each staff entity
         Currently just counts five lines at a time, should utilize numpy'''
         staffs = []
@@ -143,16 +144,22 @@ class StaffLines(Detector):
         return staffs
 
 
-    def slice_staff(image, lines):
-        ''' Return image subarray comprising one staff line
+    def staff_bounding_box(self, lines):
+        ''' Return corner coordinates of rectangle surrounding given lines
         lines is a list of 4-tuples of the form (x1, y1, x2, y2)
-        Currently crops everything outside the stafflines themselves
+        Currently ignores everything outside the stafflines themselves
         Will need to expand to account for ledger lines'''
         min_x = min(min(line[0], line[2]) for line in lines)
         max_x = max(max(line[0], line[2]) for line in lines)
         min_y = min(min(line[1], line[3]) for line in lines)
         max_y = max(max(line[1], line[3]) for line in lines)
-        return image[min_y:max_y, min_x:max_x]
+        return (min_x, min_y, max_x, max_y)
+
+
+    def slice_staff(self, corners):
+        ''' Return image subarray bounded by given coordinates'''
+        (min_x, min_y, max_x, max_y) = corners
+        return self.image[min_y:max_y, min_x:max_x]
 
 
     def get_params(self, n):
@@ -215,7 +222,7 @@ class TestLines(unittest.TestCase):
         sets = []
         # Gather sets of all params that detect the proper number of lines
         for k, v in self.tests.items():
-            temp = set(v.get_params(v.key[k] * 2))  # x2: one line, two edges
+            temp = set(v.get_params(v.key[k]))
             sets.append(temp)
             print(f'{k}: {len(temp)}\n')
         params = set.intersection(*sets)
