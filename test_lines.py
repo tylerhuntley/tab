@@ -5,7 +5,9 @@ from time import time
 import itertools
 import pickle
 import unittest
+import os
 
+CWD = os.getcwd()
 
 class Detector():
     # key = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
@@ -17,7 +19,7 @@ class Detector():
     def __init__(self, name):
         # Image info
         self.name = name
-        self.image_name = f'{self.image_path}{name}.png'
+        self.image_name = os.path.join(self.image_path, f'{name}.png')
         self.image = cv2.imread(self.image_name)
         self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         self.edges = self.detect_edges(self.gray)
@@ -25,10 +27,13 @@ class Detector():
 
 
     def load_data(self):
-        self.line_data = np.load(f'{self.data_path}{self.name}')
+        self.line_data = np.load(os.path.join(CWD, self.data_path, self.name))
 
     def save_data(self):
-        with open(f'{self.data_path}{self.name}', 'wb') as f:
+        path = os.path.join(CWD, self.data_path)
+        if not os.path.exists(path):
+            os.makedirs(path)  # Ensure directory exists
+        with open(os.path.join(path, self.name), 'wb') as f:
             pickle.dump(self.line_data, f)
 
     @staticmethod
