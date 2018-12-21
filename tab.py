@@ -14,7 +14,7 @@
 '''
 
 CHARS_PER_BAR = 32  # Probably want this to be dynamic
-MAX_WIDTH = 67  # 64 chars (2 * 32 chars) + 3 bars
+MAX_WIDTH = 67  # 64 chars (2 * 32 chars) + 3 barlines
 
 # Note duration values
 W = 1
@@ -103,7 +103,7 @@ class Tab():
 
 
     def __repr__(self):
-        return '\n'.join(str(staff) for staff in self.staffs)
+        return '\n'.join(str(staff) for staff in self.staffs)+'\n'
 
 
     def add_bar(self, bar):
@@ -114,14 +114,4 @@ class Tab():
 
 
 if __name__ == '__main__':
-    bar = Bar()
-    print('Bar:\n' + str(bar))
-    staff = Staff()
-    for i in range(3):
-        print(f'Staff bars: {i}\n' + str(staff))
-        staff.add_bar(bar)
-        
-    tab = Tab()
-    for i in range(4):
-        print(f'Tab bars: {i}\n' + str(tab))
-        tab.add_bar(bar)
+    pass
