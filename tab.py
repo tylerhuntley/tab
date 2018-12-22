@@ -31,25 +31,29 @@ class Bar():
     def __init__(self):
         self.lines = [f'|{" " * CHARS_PER_BAR}|']*6
 
-
     def __repr__(self):
         return '\n'.join(self.lines)+'\n'
 
+    def __eq__(self, other):
+        return str(self) == str(other)
 
-    def add_notes(self, notes, duration):
+    def clear(self):
+        self.lines = [f'|{" " * CHARS_PER_BAR}|']*6
+
+    def add_chord(self, notes, duration):
         '''Receives a list of tuples: (string, fret)
         Duration should be that of the shortest note in the list
         Modifies self.lines in place and returns nothing'''
-        
+
         # Add placeholder notes to fill up empty lines
         for i in range(6):
             if i not in [note[0] for note in notes]:
                 notes.append((i, ''))
-                
+
         for note in notes:
             n = 5 - note[0]  # String and line numbers are inverse
             line = ''
-            
+
             # Copy line verbatim upto first space
             for c in self.lines[n]:
                 if c == ' ':
@@ -57,20 +61,29 @@ class Bar():
                 line += c
             else:  # No spaces, bar is full
                 break
-            
+
             # Add note number and fill with dashes for its duration
             line += str(note[1])
             spacing = int(CHARS_PER_BAR * duration) - len(str(note[1]))
             for i in range(spacing):
                 if len(line) < len(self.lines[n]) -1:  # Don't overfill
                     line += '-'
-            
+
             # Refill the rest with spaces and end with a bar
             while len(line) < len(self.lines[n]) - 1:
                 line += ' '
             line += '|'
-            
+
             self.lines[n] = line
+
+    def add_note(self, note, duration):
+        ''' Wrapper for add_chord() to pass single notes as a chord/list'''
+        self.add_chord([note], duration)
+
+    def add_run(self, notes, duration):
+        ''' Adds notes sequentially with equal duration, as in a scale run'''
+        for note in notes:
+            self.add_note(note, duration)
 
 
 class Staff():
@@ -93,7 +106,7 @@ class Staff():
             try:
                 self.lines[i] += line[1:]  # Avoid duplicating '|' symbols
             except IndexError:
-                self.lines.append(line)                          
+                self.lines.append(line)
 
 
 class Tab():
