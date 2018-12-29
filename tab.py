@@ -40,6 +40,13 @@ class Bar():
     def clear(self):
         self.lines = [f'|{" " * CHARS_PER_BAR}|']*6
 
+    def is_full(self):
+        ''' Bar is full once every ' ' has been replaced by a # or a '-' '''
+        for c in str(self):
+            if c == ' ':
+                return False
+        return True
+
     def add_chord(self, notes, duration):
         '''Receives a list of tuples: (string, fret)
         Duration should be that of the shortest note in the list
@@ -94,36 +101,54 @@ class Staff():
         if bar:
             self.add_bar(bar)
 
+    def __len__(self):
+        length = sum(len(bar.lines[0]) for bar in self.bars)
+        length -= len(self.bars[1:])
+        return length
 
     def __repr__(self):
-        temp = [line.replace(' ', '-') for line in self.lines]
-        return '\n'.join(temp)+'\n'
-
+        lines = []
+        for bar in self.bars:
+            for i, line in enumerate(bar.lines):
+                try:
+                    # line[1:] prevents duplicating vertical barlines
+                    lines[i] += line[1:].replace(' ', '-')
+                except IndexError:
+                    lines.append(line.replace(' ', '-'))
+        return '\n'.join(lines)+'\n'
 
     def add_bar(self, bar):
-        self.bars.append(bar)  # Keep a running list of Bar() objects
-        for i, line in enumerate(bar.lines):
-            try:
-                self.lines[i] += line[1:]  # Avoid duplicating '|' symbols
-            except IndexError:
-                self.lines.append(line)
+        self.bars.append(bar)
 
 
 class Tab():
     '''Directs staff concatenation, manages line length/page display'''
     def __init__(self):
-        self.staffs = []
-
+        self.last_bar = Bar()
+        self.bars = [self.last_bar]
+        self.staffs = [Staff(self.last_bar)]
 
     def __repr__(self):
         return '\n'.join(str(staff) for staff in self.staffs)+'\n'
 
-
     def add_bar(self, bar):
-        '''Add bar to last staff, wrap to new staff if past MAX_LENGTH'''
-        if self.staffs == [] or (len(self.staffs[-1].lines[0]) >= MAX_WIDTH):
+        '''Add bar to last staff, wrap to new staff if past MAX_WIDTH '''
+        if len(self.staffs[-1]) >= MAX_WIDTH:
             self.staffs.append(Staff())
         self.staffs[-1].add_bar(bar)
+
+    def add_chord(self, chord, duration):
+        if self.last_bar.is_full():
+            self.last_bar = Bar()
+            self.add_bar(self.last_bar)
+        self.last_bar.add_chord(chord, duration)
+
+    def add_note(self, note, duration):
+        self.add_chord([note], duration)
+
+    def add_run(self, notes, duration):
+        for note in notes:
+            self.add_note(note, duration)
 
 
 if __name__ == '__main__':

@@ -17,9 +17,10 @@ class TestBlankBars(unittest.TestCase):
         self.assertEqual(str(self.staff), '\n')
 
     def test_blank_staff(self):
-        """ Test 1-8 empty bars on a single, long staffline. """
+        """ Test 1-4 empty bars on a single, long staffline. """
+        self.maxDiff = None
         LINE = f"|{'-' * 32}"
-        for i in range(1, 9):
+        for i in range(1, 5):
             with self.subTest(i=i):
                 STAFF = (LINE  * i + '|\n') * 6
                 self.staff.add_bar(self.bar)
@@ -32,9 +33,9 @@ class TestBlankBars(unittest.TestCase):
         LINE = f"|{'-' * 32}"
         ONE_BAR = (LINE + '|\n') * 6 + '\n'
         TWO_BAR = (LINE * 2 + '|\n') * 6 + '\n'
-        for i in range(1, 9):
-            with self.subTest(i=i):
-                TAB = TWO_BAR * (i // 2) + ONE_BAR * (i % 2)
+        for i in range(1, 5):
+            with self.subTest(i=i+1):
+                TAB = TWO_BAR * ((i+1) // 2) + ONE_BAR * ((i+1) % 2)
                 self.tabs.add_bar(self.bar)
                 self.assertEqual(str(self.tabs), TAB)
 
@@ -117,6 +118,53 @@ class TestBars(unittest.TestCase):
                                '|0---2---4-----------------------|\n'
                                '|--------------------------------|\n'
                                '|--------------------------------|\n')
+
+
+class TestTabs(unittest.TestCase):
+    def SetUp(self):
+        self.tabs = tab.Tab()
+
+    def test_two_bars(self):
+        self.tabs = tab.Tab()
+        root = Note('A3')
+        major = (0, 2, 4, 5, 7, 9, 11, 12)
+        self.tabs.add_run([(root + i).get_low_fret() for i in major], 1/4)
+        if PRINT:
+            print('A major, two bars: ')
+            print(self.tabs)
+
+        self.assertEqual(str(self.tabs),
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|----------------1-------2-------|\n'
+'|------------------------0-------|2-------4-----------------------|\n'
+'|0-------2-------4---------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n\n')
+
+    def test_four_bars(self):
+        self.tabs = tab.Tab()
+        root = Note('A3')
+        major = (0, 2, 4, 5, 7, 9, 11, 12)
+        self.tabs.add_run([(root + i).get_low_fret() for i in major], 1/2)
+        if PRINT:
+            print('A major, four bars: ')
+            print(self.tabs)
+
+        self.assertEqual(str(self.tabs),
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|----------------0---------------|\n'
+'|0---------------2---------------|4-------------------------------|\n'
+'|--------------------------------|--------------------------------|\n'
+'\n'
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|1---------------2---------------|\n'
+'|2---------------4---------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n'
+'|--------------------------------|--------------------------------|\n\n')
+
 
 
 if __name__ == '__main__':
