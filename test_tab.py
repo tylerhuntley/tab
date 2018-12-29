@@ -3,14 +3,13 @@ import tab
 from notes import Note
 
 
-class TestBlankBars(unittest.TestCase):
+class TestBlankStaticBars(unittest.TestCase):
     def setUp(self):
         self.bar = tab.Bar()
         self.staff = tab.Staff()
         self.tabs = tab.Tab()
 
-    def test_bar(self):
-#        print('Bar:\n' + str(self.bar))
+    def test_null_bar(self):
         self.assertEqual(str(self.bar), f"|{' ' * 32}|\n" * 6)
 
     def test_null_staff(self):
@@ -40,7 +39,58 @@ class TestBlankBars(unittest.TestCase):
                 self.assertEqual(str(self.tabs), TAB)
 
 
-class TestBars(unittest.TestCase):
+class TestDynamicBars(unittest.TestCase):
+    def test_null_bar(self):
+        self.bar = tab.Bar(width=tab.MIN_WIDTH)
+        self.assertEqual(self.bar, f"|{' ' * tab.MIN_WIDTH}|\n" * 6)
+
+    # The following use improper notes arguments, for testing, for now.
+    def test_whole_note(self):
+        self.bar = tab.Bar(notes=[(0, 1)])
+        self.bar.add_note((0, 0), 1)
+        if PRINT:
+            print('Dynamic whole note: ')
+            print(self.bar)
+        self.assertEqual(len(self.bar), 8+2)
+
+    def test_half_note(self):
+        self.bar = tab.Bar(notes=[(0, 1/2)])
+        for i in range(2):
+            self.bar.add_note((0, 0), 1/2)
+        if PRINT:
+            print('Dynamic half notes: ')
+            print(self.bar)
+        self.assertEqual(len(self.bar), 8+2)
+
+    def test_quarter_note(self):
+        self.bar = tab.Bar(notes=[(0, 1/4)])
+        for i in range(4):
+            self.bar.add_note((0, 0), 1/4)
+        if PRINT:
+            print('Dynamic quarter notes: ')
+            print(self.bar)
+        self.assertEqual(len(self.bar), 16+2)
+
+    def test_eighth_note(self):
+        self.bar = tab.Bar(notes=[(0, 1/8)])
+        for i in range(8):
+            self.bar.add_note((0, 0), 1/8)
+        if PRINT:
+            print('Dynamic eighth notes: ')
+            print(self.bar)
+        self.assertEqual(len(self.bar), 32+2)
+
+    def test_sixteenth_note(self):
+        self.bar = tab.Bar(notes=[(0, 1/16)])
+        for i in range(16):
+            self.bar.add_note((0, 0), 1/16)
+        if PRINT:
+            print('Dynamic sixteenth notes: ')
+            print(self.bar)
+        self.assertEqual(len(self.bar), 64+2)
+
+
+class TestStaticBars(unittest.TestCase):
     def test_length_limit(self):
         ''' Ensure notes added beyond 1 bars-length are ignored'''
         bar_0 = tab.Bar()
@@ -79,7 +129,7 @@ class TestBars(unittest.TestCase):
         scale.add_note(Note('D#4').get_low_fret(), 1/8)
         scale.add_note(Note('E4').get_low_fret(), 1/8)
         if PRINT:
-            print('E Major:')
+            print('Static E Major:')
             print(scale)
         self.assertEqual(scale, '|--------------------------------|\n'
                                 '|--------------------------------|\n'
@@ -95,7 +145,7 @@ class TestBars(unittest.TestCase):
         scale = tab.Bar()
         scale.add_run([(root + i).get_low_fret() for i in major], 1/8)
         if PRINT:
-            print('A Major:')
+            print('Static A Major:')
             print(scale)
         self.assertEqual(scale,'|--------------------------------|\n'
                                '|--------------------------------|\n'
@@ -110,7 +160,7 @@ class TestBars(unittest.TestCase):
         scale = tab.Bar()
         scale.add_run([Note(i).get_low_fret() for i in D_major], 1/8)
         if PRINT:
-            print('D Major:')
+            print('Static D Major:')
             print(scale)
         self.assertEqual(scale,'|--------------------------------|\n'
                                '|--------------------0---2---3---|\n'
@@ -130,7 +180,7 @@ class TestTabs(unittest.TestCase):
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         self.tabs.add_run([(root + i).get_low_fret() for i in major], 1/4)
         if PRINT:
-            print('A major, two bars: ')
+            print('Static A major, two bars: ')
             print(self.tabs)
 
         self.assertEqual(str(self.tabs),
@@ -147,7 +197,7 @@ class TestTabs(unittest.TestCase):
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         self.tabs.add_run([(root + i).get_low_fret() for i in major], 1/2)
         if PRINT:
-            print('A major, four bars: ')
+            print('Static A major, four bars: ')
             print(self.tabs)
 
         self.assertEqual(str(self.tabs),
@@ -169,4 +219,5 @@ class TestTabs(unittest.TestCase):
 
 if __name__ == '__main__':
     PRINT = True
+#    print()
     unittest.main()

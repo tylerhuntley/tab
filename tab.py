@@ -1,20 +1,17 @@
 '''
 64 chars/bar:
 |----------------------------------------------------------------|
-|----------------------------------------------------------------|
-|----------------------------------------------------------------|
 32 chars/bar:
-|--------------------------------|--------------------------------|
-|--------------------------------|--------------------------------|
 |--------------------------------|--------------------------------|
 16 chars/bar:
 |----------------|----------------|----------------|----------------|
-|----------------|----------------|----------------|----------------|
-|----------------|----------------|----------------|----------------|
+8 chars/bar:
+|--------|--------|--------|--------|--------|--------|--------|--------|
 '''
 
 CHARS_PER_BAR = 32  # Probably want this to be dynamic
-MAX_WIDTH = 67  # 64 chars (2 * 32 chars) + 3 barlines
+MIN_WIDTH = 8  # Minimum size for sparse or empty bars
+MAX_WIDTH = 67  # 64 chars (2 * 32 chars/bar) + 3 barlines
 
 # Note duration values
 W = 1
@@ -28,8 +25,18 @@ T = 1/32
 class Bar():
     '''Manages construction of a single tab measure, and placement of
     numerical note symbols on the appropriate lines'''
-    def __init__(self):
-        self.lines = [f'|{" " * CHARS_PER_BAR}|']*6
+    def __init__(self, width=CHARS_PER_BAR, notes=None):
+        ''' notes must be a list of tuples: [(note, duration),]
+        width is an integer, ideally a power of 2 (maybe mandatory)'''
+        if notes:
+            # Shortest note will get 4 spaces (#s and '-'s) to avoid crowding
+            temp = int(4 / min(note[1] for note in notes))
+            self.width = max(MIN_WIDTH, temp)  # 4/bar looks dumb
+        else:
+            self.width = width
+        self.lines = [f'|{" " * self.width}|']*6
+
+#        self.add_all(notes)  #TODO, pre-add notes
 
     def __repr__(self):
         return '\n'.join(self.lines)+'\n'
@@ -37,8 +44,12 @@ class Bar():
     def __eq__(self, other):
         return str(self) == str(other)
 
+    def __len__(self):
+        # All lines should have the same length as the first, right?
+        return len(self.lines[0])
+
     def clear(self):
-        self.lines = [f'|{" " * CHARS_PER_BAR}|']*6
+        self.lines = [f'|{" " * self.width}|']*6
 
     def is_full(self):
         ''' Bar is full once every ' ' has been replaced by a # or a '-' '''
@@ -71,7 +82,7 @@ class Bar():
 
             # Add note number and fill with dashes for its duration
             line += str(note[1])
-            spacing = int(CHARS_PER_BAR * duration) - len(str(note[1]))
+            spacing = int(self.width * duration) - len(str(note[1]))
             for i in range(spacing):
                 if len(line) < len(self.lines[n]) -1:  # Don't overfill
                     line += '-'
@@ -102,7 +113,7 @@ class Staff():
             self.add_bar(bar)
 
     def __len__(self):
-        length = sum(len(bar.lines[0]) for bar in self.bars)
+        length = sum(len(bar) for bar in self.bars)
         length -= len(self.bars[1:])
         return length
 
