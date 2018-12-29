@@ -3,32 +3,49 @@ from detect_lines import StaffLines
 
 # KEY = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
 # Doubled key values for edged images
-KEY = {'line': 10, 'kumbayah': 20, 'star': 30, 'sleeves': 40, 'rosita': 70}
+NUM_STAFF_LINES = {'line': 10, 'kumbayah': 20, 'star': 30, 'sleeves': 40, 'rosita': 70}
+NUM_STAFFS = {'line': 1, 'kumbayah': 2, 'star': 3, 'sleeves': 4, 'rosita': 7}
 EXCLUDE = {}
 
-class TestLines(unittest.TestCase):
+class TestStaffLines(unittest.TestCase):
     def setUp(self):
-        self.tests = {}
-        for i in KEY:
+        self.files = []
+        for i in NUM_STAFF_LINES:
             if i not in EXCLUDE:
-                self.tests[i] = StaffLines(i)
+                self.files.append(StaffLines(i))
 
     def test_counts(self):
-        for k, v in self.tests.items():
-            with self.subTest(i=k):
-                counts = {len(i) for i in v.line_data.values()}
-                self.assertIn(KEY[k], counts)
+        for file in self.files:
+            with self.subTest(i=file.name):
+                counts = {len(i) for i in file.line_data.values()}
+                self.assertIn(NUM_STAFF_LINES[file.name], counts)
 
     def test_common_param(self):
         sets = []
         # Gather sets of all params that detect the proper number of lines
-        for k, v in self.tests.items():
-            temp = set(v.get_params(KEY[k]))
+        for file in self.files:
+            temp = set(file.get_params(NUM_STAFF_LINES[file.name]))
             sets.append(temp)
-            print(f'{k}: {len(temp)}\n')
+            print(f'{file.name}: {len(temp)}\n')
         params = set.intersection(*sets)
         print(f'Common: {len(params)}\n{params}')
+        # Verify at least one set detects the right lines in ALL images
         self.assertGreaterEqual(len(params), 1)
+
+
+class TestStaffs(unittest.TestCase):
+    def setUp(self):
+        self.files = []
+        for i in NUM_STAFFS:
+            if i not in EXCLUDE:
+                self.files.append(StaffLines(i))
+
+    def test_staff_counts(self):
+        for file in self.files:
+            self.assertEqual(len(file.staff_views), NUM_STAFFS[file.name])
+            for view in file.staff_views:
+                # Empty views are surely wrong, but how to test CORRECTNESS?
+                self.assertGreater(view.size, 0)
 
 
 @unittest.expectedFailure
