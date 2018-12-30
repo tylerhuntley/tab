@@ -35,17 +35,14 @@ class Pitch():
 
         self.frets = self.get_frets()
 
-
     def __repr__(self):
         return f"Note('{self.name}') - Value: {self.value}"
-
 
     def __add__(self, other):
         try:
             return self.__class__(self.value + other)  # adding ints, +1 per semitone
         except TypeError:
             return self  # adding anything else has no effect
-
 
     def __sub__(self, other):
         try:
@@ -55,13 +52,11 @@ class Pitch():
         else:
             return self  # otherwise no effect
 
-
     def get_next_fret(self, capo):
         '''Return fret with the lowest value still greater than capo'''
         for fret in self.frets[::-1]:  # Assumes frets are sorted by string
             if fret[1] > capo:
                 return fret
-
 
     def get_name(self):
         ''' Convert integer value to note name.'''
@@ -78,7 +73,6 @@ class Pitch():
             return f'{letter}{accidental}{octave}'
         else:
             return f'{letter}{octave}'
-
 
     def get_value(self):
         ''' Convert note name to integer value.'''
@@ -142,7 +136,6 @@ class Chord():
                 self.shapes.append(sorted(shape))
 #        self.shapes.sort()
 
-
     @ property
     def shape(self):
         # Need  to implement a way to pick the best option from self.shapes
@@ -150,7 +143,6 @@ class Chord():
         sums = self.span_sum()
         lowest = min(sums.keys())
         return sums[lowest][0]
-
 
     def fret_sum(self):
         '''Sum the absolute fret values of each note in each shape
@@ -163,7 +155,6 @@ class Chord():
             except KeyError:
                 result[total] = [shape]
         return result
-
 
     def span_sum(self):
         '''Sum the difference of each fret and the lowest fret in a shape
@@ -189,22 +180,53 @@ class Hand():
     def __init__(self):
         self.capo = 0
         self.barre = False
-        self.fingers = {i:() for i in range(4)}
+        self.open_notes = []
+        self.fingers = [Finger() for i in range(4)]
 
+    @property
+    def index(self):
+        return self.fingers[0].fret  # Fret location of index finger
 
     @property
     def shape(self):
         temp = []
-        for i in self.fingers.values():
-            if i:
-                temp.append(i)
+        for fret, string in [(f.fret, f.string) for f in self.fingers]:
+            if fret:
+                temp.append((string, fret))
         # Add each higher string at index finger's fret
         if self.barre:
-            for i in range(self.fingers[0][0] + 1, 6):
+            for i in range(self.fingers[0].string + 1, 6):
                 # Don't add string being played by other fingers
                 if i not in [f for f in temp]:
-                    temp.append((i, self.fingers[0][1]))
+                    temp.append((i, self.index))
         return sorted(temp)
+
+
+class Finger():
+    def __init__(self, string=None, fret=None):
+        if string != None and fret != None:
+            self.position = (string, fret)
+        else:
+            self.position = None
+
+    @property
+    def string(self):
+        try:    return self.position[0]
+        except TypeError:   return None
+
+    @property
+    def fret(self):
+        try:    return self.position[1]
+        except TypeError:   return None
+
+    def move(self, new):
+        if self.position == None or new == None:
+            self.position = new
+            return 0
+        else:
+            difficulty = sum(abs(a - b) for a, b in zip(new, self.position))
+            self.position = new
+            return difficulty
 
 
 class TestNotes(unittest.TestCase):
@@ -225,6 +247,7 @@ class TestNotes(unittest.TestCase):
         self.assertEqual(self.e2.frets, [(0, 0)])
 
 
+@unittest.expectedFailure
 class TestOpenChords(unittest.TestCase):
     def setUp(self):
         self.e = Chord([-8, -1, 4, 8, 11, 16])
@@ -246,6 +269,30 @@ class TestOpenChords(unittest.TestCase):
         for chord, shape in zip(self.chords, self.shapes):
             with self.subTest(i=chord):
                 self.assertEqual(chord.shape, shape)
+
+class TestFingers(unittest.TestCase):
+    def setUp(self):
+        self.f = Finger()
+
+    def test_null_finger(self):
+        self.assertEqual(Finger().position, None)
+        for string, fret in it.product(range(6), range(12)):
+            self.assertEqual(Finger().move((string, fret)), 0)
+
+    def test_properties(self):
+        self.assertEqual(Finger().string, None)
+        self.assertEqual(Finger().fret, None)
+        for string, fret in it.product(range(6), range(12)):
+            with self.subTest(i=(string, fret)):
+                f = Finger(string, fret)
+                self.assertEqual(f.string, string)
+                self.assertEqual(f.fret, fret)
+
+    def test_finger_moves(self):
+        for string, fret in it.product(range(6), range(12)):
+            f = Finger(0, 0)
+            with self.subTest(i=(string, fret)):
+                self.assertEqual(f.move((string, fret)), string+fret)
 
 
 if __name__ == '__main__':
