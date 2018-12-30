@@ -3,9 +3,9 @@ from detect_lines import StaffLines
 
 # KEY = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
 # Doubled key values for edged images
-NUM_STAFF_LINES = {'line': 10, 'kumbayah': 20, 'star': 30, 'sleeves': 40, 'rosita': 70}
-NUM_STAFFS = {'line': 1, 'kumbayah': 2, 'star': 3, 'sleeves': 4, 'rosita': 7}
-EXCLUDE = {}
+NUM_STAFF_LINES = {'blank': 120, 'line': 10, 'kumbayah': 20, 'star': 30, 'sleeves': 40, 'rosita': 70}
+NUM_STAFFS = {'blank': 12, 'line': 1, 'kumbayah': 2, 'star': 3, 'sleeves': 4, 'rosita': 7}
+EXCLUDE = {'rosita'}
 
 class TestStaffLines(unittest.TestCase):
     def setUp(self):
@@ -47,6 +47,12 @@ class TestStaffs(unittest.TestCase):
                 # Empty views are surely wrong, but how to test CORRECTNESS?
                 self.assertGreater(view.size, 0)
 
+    def test_staff_continuity(self):
+        ''' Bottom of each staff box must align with the top of the next'''
+        for file in self.files:
+            for a, b in zip(file.staff_boxes[:-1], file.staff_boxes[1:]):
+                self.assertEqual(a[3], b[1])
+
 
 @unittest.expectedFailure
 class TestBars(unittest.TestCase):
@@ -72,6 +78,7 @@ class TestBars(unittest.TestCase):
 if __name__ == '__main__':
     test_files = {}
     for name in NUM_STAFF_LINES:
-        test_files[name] = StaffLines(name)
+        if name not in EXCLUDE:
+            test_files[name] = StaffLines(name)
 
     unittest.main()

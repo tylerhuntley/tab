@@ -105,14 +105,19 @@ class StaffLines(Detector):
             self.save_data()
 
         # This part will need to choose parameters on its own
+        self.staff_boxes = []
         self.staff_views = []
         lines = self.line_data[(190, 95)]  # Common param taken from testing
         for staff in self.separate_staffs(lines):
             box = self.get_bounding_box(staff)
+            self.staff_boxes.append(box)
+
+        self.expand_staff_boxes()
+        for box in self.staff_boxes:
             view = self.slice_staff(box)
             self.staff_views.append(view)
 
-        self.plot_staffs()
+        self.plot_staffs()  # Comment me to avoid a barrage of test plots
 
     def plot_staffs(self):
         fig = plt.figure()
@@ -173,6 +178,25 @@ class StaffLines(Detector):
         min_y = min(min(line[1], line[3]) for line in lines)
         max_y = max(max(line[1], line[3]) for line in lines)
         return (min_x, min_y, max_x, max_y)
+
+    def expand_staff_boxes(self):
+        ''' Stretch adajcent staff boxes together to capture ledger lines '''
+        # Single staffs need to be expanded blindly. Can maybe improve this.
+        if len(self.staff_boxes) == 1:
+            x1, y1, x2, y2 = self.staff_boxes[0]
+            self.staff_boxes = [(x1, y1 - (y2 - y1), x2, y2 + (y2 - y1))]
+            return
+
+        # Multiple staffs are made contiguous, to avoid gaps in coverage
+        temp = [list(i) for i in self.staff_boxes]
+        for top, bot in zip(temp[:-1], temp[1:]):
+            mid = int((top[3] + bot[1]) / 2)  # Bring midlines together
+            top[3] = mid
+            bot[1] = mid
+        # Move neigborless top/bottom limits equivalent symmetrical amounts
+        temp[0][1] -= temp[0][3] - self.staff_boxes[0][3]
+        temp[-1][3] += self.staff_boxes[-1][1] - temp[-1][1]
+        self.staff_boxes = [tuple(i) for i in temp]
 
     def slice_staff(self, corners):
         ''' Return image subarray bounded by given coordinates'''
