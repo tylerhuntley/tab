@@ -112,6 +112,18 @@ class StaffLines(Detector):
             view = self.slice_staff(box)
             self.staff_views.append(view)
 
+        self.plot_staffs()
+
+    def plot_staffs(self):
+        fig = plt.figure()
+        fig.suptitle(self.name, fontsize=20)
+        for i, view in enumerate(self.staff_views):
+            fig.add_subplot(len(self.staff_views), 1, i+1)
+            plt.title(f'Staff #{i+1}', loc='left')
+            plt.axis('off')
+            plt.imshow(view)
+        fig.show()
+
     def probe_image(self, param, max_gap):
         ''' Add a parameter set and its associated lines to image dataset '''
         min_length = int(self.image.shape[1] * 0.5)

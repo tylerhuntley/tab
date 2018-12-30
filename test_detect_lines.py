@@ -12,7 +12,7 @@ class TestStaffLines(unittest.TestCase):
         self.files = []
         for i in NUM_STAFF_LINES:
             if i not in EXCLUDE:
-                self.files.append(StaffLines(i))
+                self.files.append(test_files[i])
 
     def test_counts(self):
         for file in self.files:
@@ -38,7 +38,7 @@ class TestStaffs(unittest.TestCase):
         self.files = []
         for i in NUM_STAFFS:
             if i not in EXCLUDE:
-                self.files.append(StaffLines(i))
+                self.files.append(test_files[i])
 
     def test_staff_counts(self):
         for file in self.files:
@@ -70,4 +70,8 @@ class TestBars(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    test_files = {}
+    for name in NUM_STAFF_LINES:
+        test_files[name] = StaffLines(name)
+
     unittest.main()
