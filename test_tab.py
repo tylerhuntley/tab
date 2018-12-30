@@ -1,4 +1,5 @@
 import unittest
+import itertools as it
 import tab
 from notes import Note
 
@@ -47,46 +48,36 @@ class TestDynamicBars(unittest.TestCase):
     # The following use improper notes arguments, for testing, for now.
     def test_whole_note(self):
         self.bar = tab.Bar(notes=[(0, 1)])
-        self.bar.add_note((0, 0), 1)
-        if PRINT:
-            print('Dynamic whole note: ')
-            print(self.bar)
+        self.bar.add_fret((0, 0), 1)
+        if PRINT: print('Dynamic whole note:', self.bar, sep='\n')
         self.assertEqual(len(self.bar), 8+2)
 
     def test_half_note(self):
         self.bar = tab.Bar(notes=[(0, 1/2)])
         for i in range(2):
-            self.bar.add_note((0, 0), 1/2)
-        if PRINT:
-            print('Dynamic half notes: ')
-            print(self.bar)
+            self.bar.add_fret((0, 0), 1/2)
+        if PRINT: print('Dynamic half notes:', self.bar, sep='\n')
         self.assertEqual(len(self.bar), 8+2)
 
     def test_quarter_note(self):
         self.bar = tab.Bar(notes=[(0, 1/4)])
         for i in range(4):
-            self.bar.add_note((0, 0), 1/4)
-        if PRINT:
-            print('Dynamic quarter notes: ')
-            print(self.bar)
+            self.bar.add_fret((0, 0), 1/4)
+        if PRINT: print('Dynamic quarter notes:', self.bar, sep='\n')
         self.assertEqual(len(self.bar), 16+2)
 
     def test_eighth_note(self):
         self.bar = tab.Bar(notes=[(0, 1/8)])
         for i in range(8):
-            self.bar.add_note((0, 0), 1/8)
-        if PRINT:
-            print('Dynamic eighth notes: ')
-            print(self.bar)
+            self.bar.add_fret((0, 0), 1/8)
+        if PRINT: print('Dynamic eighth notes:', self.bar, sep='\n')
         self.assertEqual(len(self.bar), 32+2)
 
     def test_sixteenth_note(self):
         self.bar = tab.Bar(notes=[(0, 1/16)])
         for i in range(16):
-            self.bar.add_note((0, 0), 1/16)
-        if PRINT:
-            print('Dynamic sixteenth notes: ')
-            print(self.bar)
+            self.bar.add_fret((0, 0), 1/16)
+        if PRINT: print('Dynamic sixteenth notes:', self.bar, sep='\n')
         self.assertEqual(len(self.bar), 64+2)
 
 
@@ -94,40 +85,49 @@ class TestStaticBars(unittest.TestCase):
     def test_length_limit(self):
         ''' Ensure notes added beyond 1 bars-length are ignored'''
         bar_0 = tab.Bar()
-        bar_0.add_note((0, 0), 1)
+        bar_0.add_fret((0, 0), 1)
         for line in bar_0.lines:
             self.assertEqual(len(line), 34)
 
         bar_1 = tab.Bar()
-        bar_1.add_note((0, 0), 1)
-        bar_1.add_note((0, 0), 1)
+        bar_1.add_fret((0, 0), 1)
+        bar_1.add_fret((0, 0), 1)
         for line in bar_1.lines:
             self.assertEqual(len(line), 34)
 
         bar_4 = tab.Bar()
         for i in range(5):
-            bar_4.add_note((0, 0), 1/4)
+            bar_4.add_fret((0, 0), 1/4)
         for line in bar_4.lines:
             self.assertEqual(len(line), 34)
 
         bar_16 = tab.Bar()
         for i in range(17):
-            bar_16.add_note((0, 0), 1/16)
+            bar_16.add_fret((0, 0), 1/16)
         for line in bar_16.lines:
             self.assertEqual(len(line), 34)
 
+    def test_additions(self):
+        ''' Adding the same note different ways yields equal bars '''
+        bars = [tab.Bar() for i in range(4)]
+        bars[0].add(Note('E3', t='Q'))
+        bars[1].add_fret((0, 0), 1/4)
+        bars[2].add_frets([(0, 0)], 1/4)
+        bars[3].add_run([(0, 0)], 1/4)
+        for combo in it.combinations(bars, 2):
+            self.assertEqual(*combo)
 
     def test_E_major_scale(self):
-        ''' Add notes manually, one by one '''
+        ''' Add eighth Notes manually, one by one '''
         scale = tab.Bar()
-        scale.add_note(Note('E3').get_low_fret(), 1/8)
-        scale.add_note(Note('F#3').get_low_fret(), 1/8)
-        scale.add_note(Note('G#3').get_low_fret(), 1/8)
-        scale.add_note(Note('A3').get_low_fret(), 1/8)
-        scale.add_note(Note('B3').get_low_fret(), 1/8)
-        scale.add_note(Note('C#4').get_low_fret(), 1/8)
-        scale.add_note(Note('D#4').get_low_fret(), 1/8)
-        scale.add_note(Note('E4').get_low_fret(), 1/8)
+        scale.add(Note('E3', t='E'))
+        scale.add(Note('F#3', t='E'))
+        scale.add(Note('G#3', t='E'))
+        scale.add(Note('A3', t='E'))
+        scale.add(Note('B3', t='E'))
+        scale.add(Note('C#4', t='E'))
+        scale.add(Note('D#4', t='E'))
+        scale.add(Note('E4', t='E'))
         if PRINT:
             print('Static E Major:')
             print(scale)
@@ -214,7 +214,6 @@ class TestTabs(unittest.TestCase):
 '|2---------------4---------------|--------------------------------|\n'
 '|--------------------------------|--------------------------------|\n'
 '|--------------------------------|--------------------------------|\n\n')
-
 
 
 if __name__ == '__main__':

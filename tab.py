@@ -1,3 +1,5 @@
+from notes import Note, Chord
+
 '''
 64 chars/bar:
 |----------------------------------------------------------------|
@@ -58,18 +60,18 @@ class Bar():
                 return False
         return True
 
-    def add_chord(self, notes, duration):
+    def add_frets(self, frets, duration):
         '''Receives a list of tuples: (string, fret)
         Duration should be that of the shortest note in the list
         Modifies self.lines in place and returns nothing'''
 
         # Add placeholder notes to fill up empty lines
         for i in range(6):
-            if i not in [note[0] for note in notes]:
-                notes.append((i, ''))
+            if i not in [fret[0] for fret in frets]:
+                frets.append((i, ''))
 
-        for note in notes:
-            n = 5 - note[0]  # String and line numbers are inverse
+        for fret in frets:
+            n = 5 - fret[0]  # String and line numbers are inverse
             line = ''
 
             # Copy line verbatim upto first space
@@ -80,9 +82,9 @@ class Bar():
             else:  # No spaces, bar is full
                 break
 
-            # Add note number and fill with dashes for its duration
-            line += str(note[1])
-            spacing = int(self.width * duration) - len(str(note[1]))
+            # Add fret number and fill with dashes for its duration
+            line += str(fret[1])
+            spacing = int(self.width * duration) - len(str(fret[1]))
             for i in range(spacing):
                 if len(line) < len(self.lines[n]) -1:  # Don't overfill
                     line += '-'
@@ -94,14 +96,24 @@ class Bar():
 
             self.lines[n] = line
 
-    def add_note(self, note, duration):
-        ''' Wrapper for add_chord() to pass single notes as a chord/list'''
-        self.add_chord([note], duration)
+    def add_fret(self, fret, duration):
+        ''' Wrapper for add_frets() to pass single frets as a chord/list'''
+        self.add_frets([fret], duration)
 
     def add_run(self, notes, duration):
         ''' Adds notes sequentially with equal duration, as in a scale run'''
         for note in notes:
-            self.add_note(note, duration)
+            self.add_fret(note, duration)
+
+    def add(self, obj):
+        ''' Adds Note() objects to the bar for their duration '''
+        # Notes assume get_low_fret() is always best. Need to revisit that.
+        if isinstance(obj, Note):
+            self.add_fret(obj.get_low_fret(), obj.duration)
+        # Chords rely on inbuilt shape property. Need to revisit that too.
+        elif isinstance(obj, Chord):
+            frets = [note.get_low_fret() for note in obj.notes]
+            self.add_frets(frets, obj.duration)
 
 
 class Staff():
@@ -148,18 +160,18 @@ class Tab():
             self.staffs.append(Staff())
         self.staffs[-1].add_bar(bar)
 
-    def add_chord(self, chord, duration):
+    def add_frets(self, frets, duration):
         if self.last_bar.is_full():
             self.last_bar = Bar()
             self.add_bar(self.last_bar)
-        self.last_bar.add_chord(chord, duration)
+        self.last_bar.add_frets(frets, duration)
 
-    def add_note(self, note, duration):
-        self.add_chord([note], duration)
+    def add_fret(self, fret, duration):
+        self.add_frets([fret], duration)
 
-    def add_run(self, notes, duration):
-        for note in notes:
-            self.add_note(note, duration)
+    def add_run(self, frets, duration):
+        for fret in frets:
+            self.add_fret(fret, duration)
 
 
 if __name__ == '__main__':
