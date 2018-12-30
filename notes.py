@@ -179,7 +179,7 @@ class Hand():
     def __init__(self):
         self.capo = 0
         self.barre = False
-        self.open_notes = []
+        self.open_strings = []
         self.fingers = [Finger() for i in range(4)]
 
     @property
@@ -188,17 +188,18 @@ class Hand():
 
     @property
     def shape(self):
-        temp = []
-        for fret, string in [(f.fret, f.string) for f in self.fingers]:
+        shape = [(s, 0) for s in self.open_strings]  # Add open notes right away
+        for string, fret in [(f.string, f.fret) for f in self.fingers]:
             if fret:
-                temp.append((string, fret))
+                shape.append((string, fret))
+
         # Add each higher string at index finger's fret
         if self.barre:
-            for i in range(self.fingers[0].string + 1, 6):
+            for string in range(self.fingers[0].string + 1, 6):
                 # Don't add string being played by other fingers
-                if i not in [f for f in temp]:
-                    temp.append((i, self.index))
-        return sorted(temp)
+                if string not in [pos[0] for pos in shape]:
+                    shape.append((string, self.index))
+        return sorted(shape)
 
 
 class Finger():
@@ -219,6 +220,9 @@ class Finger():
         except TypeError:   return None
 
     def move(self, new):
+        ''' Move to position new, a tuple: (string, fret)
+        Or None, to lift finger off fretboard entirely
+        Return an integer difficulty for the move, for choosing best option '''
         if self.position == None or new == None:
             self.position = new
             return 0

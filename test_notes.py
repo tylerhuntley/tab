@@ -1,6 +1,6 @@
 import unittest
 import itertools as it
-from notes import Note, Chord, Finger
+from notes import Note, Chord, Finger, Hand
 
 
 class TestNotes(unittest.TestCase):
@@ -67,6 +67,75 @@ class TestFingers(unittest.TestCase):
             f = Finger(0, 0)
             with self.subTest(i=(string, fret)):
                 self.assertEqual(f.move((string, fret)), string+fret)
+                self.assertEqual(f.string, string)
+                self.assertEqual(f.fret, fret)
+
+
+class TestManualHandShapes(unittest.TestCase):
+    def test_manual_open_c_shape(self):
+        h = Hand()
+        h.open_strings = [0, 3, 5]
+        h.fingers[0].move((4, 1))
+        h.fingers[1].move((2, 2))
+        h.fingers[2].move((1, 3))
+        open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
+        self.assertEqual(h.shape, open_c)
+
+    def test_manual_open_a_shape(self):
+        h = Hand()
+        h.open_strings = (0, 1, 5)
+        h.fingers[0].move((2, 2))
+        h.fingers[1].move((3, 2))
+        h.fingers[2].move((4, 2))
+        open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
+        self.assertEqual(h.shape, open_a)
+
+    def teat_manual_open_g_shape(self):
+        h = Hand()
+        h.open_strings = [2, 3, 4]
+        h.fingers[0].move((1, 2))
+        h.fingers[1].move((0, 3))
+        h.fingers[2].move((5, 3))
+        open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
+        self.assertEqual(h.shape, open_g)
+
+    def test_manual_open_e_shape(self):
+        h = Hand()
+        h.open_strings = [0, 4, 5]
+        h.fingers[0].move((3, 1))
+        h.fingers[1].move((1, 2))
+        h.fingers[2].move((2, 2))
+        open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+        self.assertEqual(h.shape, open_e)
+
+    def test_manual_open_d_shape(self):
+        h = Hand()
+        h.open_strings = [1, 2]
+        h.fingers[0].move((3, 2))
+        h.fingers[1].move((4, 3))
+        h.fingers[2].move((5, 2))
+        open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
+        self.assertEqual(h.shape, open_d)
+
+    def test_manual_barre_a_shape(self):
+        h = Hand()
+        h.barre = True
+        h.fingers[0].move((0, 5))
+        h.fingers[1].move((1, 7))
+        h.fingers[2].move((2, 7))
+        h.fingers[3].move((3, 6))
+        barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
+        self.assertEqual(h.shape, barre_a)
+
+    def test_manual_barre_b_shape(self):
+        h = Hand()
+        h.barre = True
+        h.fingers[0].move((0, 2))
+        h.fingers[1].move((2, 4))
+        h.fingers[2].move((3, 4))
+        h.fingers[3].move((4, 4))
+        barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
+        self.assertEqual(h.shape, barre_b)
 
 
 if __name__ == '__main__':
