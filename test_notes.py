@@ -145,12 +145,12 @@ class TestManualHandShapes(unittest.TestCase):
         barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
         self.assertEqual(h.shape, barre_b)
 
+
 class TestInitHandShapes(unittest.TestCase):
     def test_open_c_shape(self):
         open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
         h = Hand(open_c)
         self.assertEqual(h.shape, open_c)
-
 
 
 if __name__ == '__main__':

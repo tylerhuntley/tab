@@ -176,11 +176,13 @@ class Hand():
     - Fingers may share a fret, if the higher finger is on a higher string.
     - Finger 0 may barre all strings above its target at the same fret.
     '''
-    def __init__(self):
+    def __init__(self, initial=None):
         self.capo = 0
         self.barre = False
         self.open_strings = []
         self.fingers = [Finger() for i in range(4)]
+        if initial:
+            self.move(initial)
 
     @property
     def index(self):
@@ -189,10 +191,9 @@ class Hand():
     @property
     def shape(self):
         shape = [(s, 0) for s in self.open_strings]  # Add open notes right away
-        for string, fret in [(f.string, f.fret) for f in self.fingers]:
-            if fret:
-                shape.append((string, fret))
-
+        for f in self.fingers:
+            if f.down:
+                shape.append((f.string, f.fret))
         # Add each higher string at index finger's fret
         if self.barre:
             for string in range(self.fingers[0].string + 1, 6):
@@ -200,6 +201,51 @@ class Hand():
                 if string not in [pos[0] for pos in shape]:
                     shape.append((string, self.index))
         return sorted(shape)
+
+    def move(self, new):
+        ''' Move hand to new shape: a list of tuples (string, fret)
+        Return an integer representing the difficulty of the transition'''
+        difficulty = 0
+        # Open strings are free
+        self.open_strings = [note[0] for note in new if note[1] == 0]
+
+        # Place the index (i) finger (and slide whole hand with it)
+        p_pos = min(note[1] for note in new if note[1] > 0)
+        i_pos = sorted(note for note in new if note[1] == p_pos)[0]
+        try: slide = p_pos - self.index
+        except TypeError: slide = p_pos
+        difficulty += self.fingers[0].move(i_pos)
+
+        # Other fingers get free movement for the initial slide.
+        for f in self.fingers[1:]:
+            try: f.move((f.string, f.fret + slide))
+            except TypeError: continue
+
+        # Place the middle (m) finger, at cost
+        try:
+            m_fret = min(note[1] for note in new if note[1] > p_pos)
+            m_pos = sorted(note for note in new if note[1] == m_fret)[0]
+            difficulty += self.fingers[1].move(m_pos)
+        except ValueError:
+            return difficulty
+
+        # Place the ring (a) finger, at cost
+        try:
+            a_fret = min(note[1] for note in new if note[1] > m_fret)
+            a_pos = sorted(note for note in new if note[1] == a_fret)[0]
+            difficulty += self.fingers[2].move(a_pos)
+        except ValueError:
+            return difficulty
+
+        # Place the pinky (c) finger, at cost
+        try:
+            c_fret = min(note[1] for note in new if note[1] > a_fret)
+            c_pos = sorted(note for note in new if note[1] == c_fret)[0]
+            difficulty += self.fingers[3].move(c_pos)
+        except ValueError:
+            return difficulty
+
+        return difficulty
 
 
 class Finger():
