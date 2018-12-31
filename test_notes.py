@@ -50,25 +50,33 @@ class TestFingers(unittest.TestCase):
 
     def test_null_finger(self):
         self.assertEqual(Finger().position, None)
-        for string, fret in it.product(range(6), range(12)):
-            self.assertEqual(Finger().move((string, fret)), 0)
-
-    def test_properties(self):
         self.assertEqual(Finger().string, None)
         self.assertEqual(Finger().fret, None)
+        self.assertEqual(Finger().down, False)
+
+    def test_init_position(self):
         for string, fret in it.product(range(6), range(12)):
             with self.subTest(i=(string, fret)):
                 f = Finger(string, fret)
-                self.assertEqual(f.string, string)
-                self.assertEqual(f.fret, fret)
+                if fret == 0:  # Fret 0 is open, thus no position
+                    self.assertEqual(f.string, None)
+                    self.assertEqual(f.fret, None)
+                else:
+                    self.assertEqual(f.string, string)
+                    self.assertEqual(f.fret, fret)
 
     def test_finger_moves(self):
         for string, fret in it.product(range(6), range(12)):
-            f = Finger(0, 0)
+            f = Finger(0, 1)
             with self.subTest(i=(string, fret)):
-                self.assertEqual(f.move((string, fret)), string+fret)
-                self.assertEqual(f.string, string)
-                self.assertEqual(f.fret, fret)
+                if fret == 0:  # Moving to 0 means lifing the finger
+                    self.assertEqual(f.move((string, fret)), 0)
+                    self.assertEqual(f.string, None)
+                    self.assertEqual(f.fret, None)
+                else:
+                    self.assertEqual(f.move((string, fret)), string+fret-1)
+                    self.assertEqual(f.string, string)
+                    self.assertEqual(f.fret, fret)
 
 
 class TestManualHandShapes(unittest.TestCase):
@@ -136,6 +144,13 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[3].move((4, 4))
         barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
         self.assertEqual(h.shape, barre_b)
+
+class TestInitHandShapes(unittest.TestCase):
+    def test_open_c_shape(self):
+        open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
+        h = Hand(open_c)
+        self.assertEqual(h.shape, open_c)
+
 
 
 if __name__ == '__main__':

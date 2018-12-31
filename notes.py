@@ -204,29 +204,36 @@ class Hand():
 
 class Finger():
     def __init__(self, string=None, fret=None):
-        if string != None and fret != None:
+        if string in range(6) and type(fret) is int and fret > 0:
             self.position = (string, fret)
+            self.down = True
         else:
-            self.position = None
+            self.lift()
 
     @property
     def string(self):
-        try:    return self.position[0]
-        except TypeError:   return None
+        if self.down: return self.position[0]
 
     @property
     def fret(self):
-        try:    return self.position[1]
-        except TypeError:   return None
+        if self.down: return self.position[1]
+
+    def lift(self):
+        self.position = None
+        self.down = False
 
     def move(self, new):
         ''' Move to position new, a tuple: (string, fret)
         Or None, to lift finger off fretboard entirely
         Return an integer difficulty for the move, for choosing best option '''
-        if self.position == None or new == None:
+        if new[1] == 0:  # Lifing a finger is easy
+            self.lift()
+            return 0
+        elif not self.down:  # Placing a lifted finger is easy too
+            self.down = True
             self.position = new
             return 0
-        else:
+        else:  # Moving placed fingers is hard
             difficulty = sum(abs(a - b) for a, b in zip(new, self.position))
             self.position = new
             return difficulty
