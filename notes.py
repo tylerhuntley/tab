@@ -143,11 +143,14 @@ class Chord():
 
     @ property
     def shape(self):
-        # Need  to implement a way to pick the best option from self.shapes
-#        return self.shapes[0]
-        sums = self.span_sum()
-        lowest = min(sums.keys())
-        return sums[lowest][0]
+        best = None
+        for shape in self.shapes:
+            h = Hand(shape)
+            try:
+                if h.strain < best.strain:
+                    best = h
+            except AttributeError: best = h
+        return best.shape
 
     def fret_sum(self):
         '''Sum the absolute fret values of each note in each shape

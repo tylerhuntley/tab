@@ -21,20 +21,27 @@ class TestNotes(unittest.TestCase):
         self.assertEqual(self.e2.frets, [(0, 0)])
 
 
-class TestOpenChords(unittest.TestCase):
+class TestChordShapes(unittest.TestCase):
     def setUp(self):
         self.e = Chord([-8, -1, 4, 8, 11, 16])
         self.a = Chord([-8, -3, 4, 9, 13, 16])
         self.d = Chord([-3, 2, 9, 14, 18])
         self.g = Chord([-5, -1, 2, 7, 11, 19])
         self.c = Chord([-8, 0, 4, 7, 12, 16])
-        self.chords = [self.e, self.a, self.d, self.g, self.c]
-        self.shapes = [open_e, open_a, open_d, open_g, open_c]
+        self.b = Chord([-6, -1, 6, 11, 15, 18])
+        self.f = Chord([-7, 0, 5, 9, 12, 17])
+        self.chords = [self.e, self.a, self.d, self.g, self.c, self.b, self.f]
+        self.shapes = [open_e, open_a, open_d, open_g, open_c, barre_b, barre_f]
 
     def test_shape_presence(self):
         for chord, shape in zip(self.chords, self.shapes):
             with self.subTest(i=chord):
                 self.assertIn(shape, chord.shapes)
+
+    def test_shape_selection(self):
+        for chord, shape in zip(self.chords, self.shapes):
+            with self.subTest(i=chord):
+                self.assertEqual(shape, chord.shape)
 
 
 class TestFingers(unittest.TestCase):
