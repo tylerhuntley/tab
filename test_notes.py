@@ -43,6 +43,25 @@ class TestChordShapes(unittest.TestCase):
             with self.subTest(i=chord):
                 self.assertEqual(shape, chord.shape)
 
+    def test_4_note_chord_shapes(self):
+        C7 = Chord(['C4', 'E4', 'A#4', 'C5'])
+        C7_shape = [(1,3), (2,2), (3,3), (4,1)]
+        Bdim = Chord(['B3', 'F4', 'G#4', 'D5'])
+        Bdim_shape = [(1,2), (2,3), (3,1), (4,3)]
+        Dmaj7 = Chord(['D4', 'A4', 'C#5', 'F#5'])
+        Dmaj7_shape = [(2,0), (3,2), (4,2), (5,2)]
+#        cV_Dmaj7_shape = [(1,5), (2,7), (3,6), (4,7)]
+        E7 = Chord(['B4', 'E5', 'G#5', 'D6'])
+        E7_shape = [(2,9), (3,9), (4,9), (5,10)]
+        cVII_A = Chord(['A4', 'E5', 'A5', 'C#6'])
+        cVII_A_shape = [(2,7), (3,9), (4,10), (5,9)]
+        cVII_G = Chord(['G4', 'B4', 'D5', 'G5'])
+        cVII_G_shape = [(1,10), (2,9), (3,7), (4,8)]
+        for chord, shape in zip((C7, Bdim, Dmaj7, E7, cVII_A, cVII_G),
+            (C7_shape, Bdim_shape, Dmaj7_shape, E7_shape, cVII_A_shape, cVII_G_shape)):
+            with self.subTest(i=chord):
+                self.assertEqual(chord.shape, shape)
+
 
 class TestFingers(unittest.TestCase):
     def test_null_finger(self):
