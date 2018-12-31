@@ -206,8 +206,11 @@ class Hand():
         ''' Move hand to new shape: a list of tuples (string, fret)
         Return an integer representing the difficulty of the transition'''
         difficulty = 0
+        new = set(new)
+        done = set()
         # Open strings are free
         self.open_strings = [note[0] for note in new if note[1] == 0]
+        [done.add((i, 0)) for i in self.open_strings]
 
         # Place the index (i) finger (and slide whole hand with it)
         p_pos = min(note[1] for note in new if note[1] > 0)
@@ -215,6 +218,7 @@ class Hand():
         try: slide = p_pos - self.index
         except TypeError: slide = p_pos
         difficulty += self.fingers[0].move(i_pos)
+        done.add(i_pos)
 
         # Other fingers get free movement for the initial slide.
         for f in self.fingers[1:]:
@@ -223,26 +227,29 @@ class Hand():
 
         # Place the middle (m) finger, at cost
         try:
-            m_fret = min(note[1] for note in new if note[1] > p_pos)
-            m_pos = sorted(note for note in new if note[1] == m_fret)[0]
+            m_fret = min(note[1] for note in new-done if note[1] >= p_pos)
+            m_pos = sorted(note for note in new-done if note[1] == m_fret)[0]
             difficulty += self.fingers[1].move(m_pos)
-        except ValueError:
+            done.add(m_pos)
+        except (ValueError, IndexError):
             return difficulty
 
         # Place the ring (a) finger, at cost
         try:
-            a_fret = min(note[1] for note in new if note[1] > m_fret)
-            a_pos = sorted(note for note in new if note[1] == a_fret)[0]
+            a_fret = min(note[1] for note in new-done if note[1] >= m_fret)
+            a_pos = sorted(note for note in new-done if note[1] == a_fret)[0]
             difficulty += self.fingers[2].move(a_pos)
-        except ValueError:
+            done.add(a_pos)
+        except (ValueError, IndexError):
             return difficulty
 
         # Place the pinky (c) finger, at cost
         try:
-            c_fret = min(note[1] for note in new if note[1] > a_fret)
-            c_pos = sorted(note for note in new if note[1] == c_fret)[0]
+            c_fret = min(note[1] for note in new-done if note[1] >= a_fret)
+            c_pos = sorted(note for note in new-done if note[1] == c_fret)[0]
             difficulty += self.fingers[3].move(c_pos)
-        except ValueError:
+            done.add(c_pos)
+        except (ValueError, IndexError):
             return difficulty
 
         return difficulty
