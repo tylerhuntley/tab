@@ -203,9 +203,21 @@ class TestHandStrain(unittest.TestCase):
         self.assertEqual(h.strain, 2)
 
     def test_open_d_strain(self):
-        ''' Should be 2, but barring it does hit 0. I'll allow it. '''
+        ''' Should be 2, but barring it does hit 1. I'll allow it. '''
         h = Hand(open_d)
-        self.assertEqual(h.strain, 0)
+        self.assertEqual(h.strain, 1)
+
+    def test_barre_b_strain(self):
+        h = Hand(barre_b)
+        self.assertEqual(h.strain, 6)
+
+    def test_barre_f_strain(self):
+        h = Hand(barre_f)
+        self.assertEqual(h.strain, 6)
+
+    def test_barre_a_strain(self):
+        h = Hand(barre_a)
+        self.assertEqual(h.strain, 6)
 
 
 if __name__ == '__main__':
@@ -214,8 +226,8 @@ if __name__ == '__main__':
     open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
     open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
     open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
-    barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
     barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
     barre_f = [(0,1), (1,3), (2,3), (3,2), (4,1), (5,1)]
+    barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
 
     unittest.main()

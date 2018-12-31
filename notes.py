@@ -206,13 +206,16 @@ class Hand():
     def strain(self):
         ''' Strain increases by 1 for every unit a finger strays from "home"
         Frets' home is x, x+1, x+2, and x+3 by finger, with index at x
-        Strings' home is either string adjacent to the previous finger's '''
+        Strings' home is either string adjacent to the previous finger's
+        Barres add 1 per extra string fretted, regardless of distance'''
         strain = 0
         for a, b in zip(self.fingers[:-1], self.fingers[1:]):
             try:
                 strain += abs(b.fret - (a.fret+1))
                 strain += max((abs(b.string - a.string) - 1), 0)
             except TypeError: continue
+        if self.barre:
+            strain += len([n for n in self.shape if n[1] == self.index]) - 1
         return strain
 
     def move(self, new):
