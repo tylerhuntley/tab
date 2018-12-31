@@ -202,6 +202,19 @@ class Hand():
                     shape.append((string, self.index))
         return sorted(shape)
 
+    @property
+    def strain(self):
+        ''' Strain increases by 1 for every unit a finger strays from "home"
+        Frets' home is x, x+1, x+2, and x+3 by finger, with index at x
+        Strings' home is either string adjacent to the previous finger's '''
+        strain = 0
+        for a, b in zip(self.fingers[:-1], self.fingers[1:]):
+            try:
+                strain += abs(b.fret - (a.fret+1))
+                strain += max((abs(b.string - a.string) - 1), 0)
+            except TypeError: continue
+        return strain
+
     def move(self, new):
         ''' Move hand to new shape: a list of tuples (string, fret)
         Return an integer representing the difficulty of the transition'''
