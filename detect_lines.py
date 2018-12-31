@@ -12,17 +12,8 @@ class Detector():
     image_path = 'static/'
     data_path = 'data/'
 
-    def __init__(self, name):
-        # Image info
-        self.name = name
-        self.image_name = os.path.join(self.image_path, f'{name}.png')
-        self.image = cv2.imread(self.image_name)
-        self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        self.edges = self.detect_edges(self.gray)
-        self.inverted = np.invert(self.gray)
-
     def load_data(self):
-        self.line_data = np.load(os.path.join(CWD, self.data_path, self.name))
+        return np.load(os.path.join(CWD, self.data_path, self.name))
 
     def save_data(self):
         path = os.path.join(CWD, self.data_path)
@@ -30,21 +21,6 @@ class Detector():
             os.makedirs(path)  # Ensure directory exists
         with open(os.path.join(path, self.name), 'wb') as f:
             pickle.dump(self.line_data, f)
-
-    @staticmethod
-    def length(line):
-        (x1, y1, x2, y2) = line
-        return ((x2 - x1)**2 + (y2 - y1)**2)**0.5
-
-    @staticmethod
-    def is_horizontal(line):
-        (x1, y1, x2, y2) = line
-        return y1 == y2
-
-    @staticmethod
-    def is_vertical(line):
-        (x1, y1, x2, y2) = line
-        return x1 == x2
 
     @staticmethod
     def detect_edges(img, sigma=0.33):
@@ -63,7 +39,7 @@ class Detector():
         ''' Draw lines on img in color, default red'''
         for line in lines:
             (x1, y1, x2, y2) = line
-            cv2.line(img, (x1, y1), (x2, y2), color, 2)
+            cv2.line(img, (x1, y1), (x2, y2), color, 1)
 
     def draw_box(self, img, points, color=(255,0,0)):
         ''' Draw a rectangle on img, default color red
@@ -87,22 +63,33 @@ class Detector():
         plt.show()
 
 
-class StaffLines(Detector):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class StaffDetector(Detector):
+    def __init__(self, name, TEST=False):
+        # Pre-process image
+        self.name = name
+        if TEST:
+            self.image_name = os.path.join(self.image_path, f'{name}.png')
+        else:
+            self.image_name = f'{name}.png'
+        self.image = cv2.imread(self.image_name)
+        self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.edges = self.detect_edges(self.gray)
 
-        # Load data, if available
-        try:
-            self.load_data()
-        # Generate data, if needed
-        except FileNotFoundError:
-            self.line_data = {}
-            self.probe_range()  # Default range for baseline data
-            self.save_data()
+        self.line_data ={}
+        if TEST:
+            # Load data, if available
+            try:
+                self.line_data = self.load_data()
+            # Generate data, if needed
+            except FileNotFoundError:
+                self.line_data = {}
+                self.probe_range()  # Default range for baseline data
+                self.save_data()
 
         # This part will need to choose parameters on its own
         self.staff_boxes = []
         self.staff_views = []
+        self.probe_image(190, 95)
         lines = self.line_data[(190, 95)]  # Common param taken from testing
         for staff in self.separate_staffs(lines):
             box = self.get_bounding_box(staff)
@@ -115,7 +102,10 @@ class StaffLines(Detector):
             self.staff_views.append(view)
 
 #        self.staff_subplots()
-        self.draw_boxes('small_boxes')
+        self.draw_boxes()
+
+    def __repr__(self):
+        return f"StaffDetector('{self.name}')"
 
     def staff_subplots(self):
         ''' Display staffs in subplots of one plt.figure (bit awkward) '''
@@ -128,13 +118,15 @@ class StaffLines(Detector):
             plt.imshow(view)
         fig.show()
 
-    def draw_boxes(self, boxes='staff_boxes'):
+    def draw_boxes(self):
         ''' Highlight detected staffs with red borders (much cleaner)
         small_boxes: as initially detected, staff_boxes: after expansion '''
         fig = plt.figure()
+        fig.suptitle(f'Staffs detected in {self.name}.png', fontsize=20)
         img = self.image.copy()
-        for box in getattr(self, boxes, self.staff_boxes):
-            self.draw_box(img, box)
+        for a, b in zip(self.small_boxes, self.staff_boxes):
+            self.draw_box(img, a)
+            self.draw_box(img, b, color=(0, 255, 0))
         plt.imshow(img)
         fig.show()
 
@@ -144,8 +136,8 @@ class StaffLines(Detector):
         # Don't repeat detection with duplicate parameters
         if (param, max_gap) not in self.line_data:
             lines = self.detect_lines(self.edges, param, min_length, max_gap)
-        # NoneType has no len(), so use empty tuples for 0 lines instead
-        self.line_data[(param, max_gap)] = () if lines is None else lines
+            # NoneType has no len(), so use empty tuples for 0 lines instead
+            self.line_data[(param, max_gap)] = () if lines is None else lines
 
     def probe_range(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
         ''' Probe a range of detection parameters to help find correct lines'''
@@ -232,22 +224,9 @@ class StaffLines(Detector):
                 print(f'{self.name}: {k} -> {len(v)}')
         return result
 
-    def join_h_lines(self, lines):
-        '''Accepts and returns a list of lines as 4-tuples (x1, y1, x2, y2)
-        Combines all collinear horizontal lines, and discards the rest'''
-        temp = {}  # Maps singular y values to 2-tuples of x values
-        for line in lines:
-            (x1, y1, x2, y2) = line
-            if not self.is_horizontal(line):
-                continue
-            if y1 in temp:
-                old = temp[y1]
-                temp[y1] = ( min(x1, x2, *old), max(x1, x2, *old) )
-            else:
-                temp[y1] = (x1, x2)
 
-        # Reformat into 4-tuples for return
-        result = []
-        for y, x in temp.items():
-            result.append((x[0], y, x[1], y))
-        return result
+if __name__ == '__main__':
+    detectors = []
+    for filename in os.listdir():
+        if filename[-4:] == '.png':  # There is a better way to do this
+            detectors.append(StaffDetector(filename[:-4]))

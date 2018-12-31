@@ -1,5 +1,5 @@
 import unittest
-from detect_lines import StaffLines
+from detect_lines import StaffDetector
 
 # KEY = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
 # Doubled key values for edged images
@@ -79,6 +79,6 @@ if __name__ == '__main__':
     test_files = {}
     for name in NUM_STAFF_LINES:
         if name not in EXCLUDE:
-            test_files[name] = StaffLines(name)
+            test_files[name] = StaffDetector(name, TEST=True)
 
     unittest.main()
