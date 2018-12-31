@@ -231,32 +231,20 @@ class Hand():
             self.barre = True
             [done.add(note) for note in barred]
 
-        # Place the middle (m) finger, at cost
-        try:
-            m_fret = min(note[1] for note in new-done if note[1] >= i_fret)
-            m_pos = sorted(note for note in new-done if note[1] == m_fret)[0]
-            difficulty += self.fingers[1].move(m_pos)
-            done.add(m_pos)
-        except (ValueError, IndexError):
-            return difficulty
+        # Place the other fingers, at cost
+        def place_finger(finger, prev_fret):
+            nonlocal difficulty
+            try:
+                fret = min(note[1] for note in new-done if note[1] >= prev_fret)
+                pos = sorted(note for note in new-done if note[1] == fret)[0]
+                difficulty += finger.move(pos)
+                done.add(pos)
+            except (ValueError, IndexError): return prev_fret
+            return fret
 
-        # Place the ring (a) finger, at cost
-        try:
-            a_fret = min(note[1] for note in new-done if note[1] >= m_fret)
-            a_pos = sorted(note for note in new-done if note[1] == a_fret)[0]
-            difficulty += self.fingers[2].move(a_pos)
-            done.add(a_pos)
-        except (ValueError, IndexError):
-            return difficulty
-
-        # Place the pinky (c) finger, at cost
-        try:
-            c_fret = min(note[1] for note in new-done if note[1] >= a_fret)
-            c_pos = sorted(note for note in new-done if note[1] == c_fret)[0]
-            difficulty += self.fingers[3].move(c_pos)
-            done.add(c_pos)
-        except (ValueError, IndexError):
-            return difficulty
+        prev_fret = i_fret
+        for f in self.fingers[1:]:
+            prev_fret = place_finger(f, prev_fret)
 
         return difficulty
 
