@@ -60,17 +60,14 @@ class Detector():
                                minLineLength=min_length, maxLineGap=max_gap)
 
     def draw_lines(self, img, lines, color=(255, 0, 0)):
-        ''' Return image with lines drawn on it in color, default red'''
-        result = img.copy()
+        ''' Draw lines on img in color, default red'''
         for line in lines:
-            for x1, y1, x2, y2 in line:
-                cv2.line(result, (x1, y1), (x2, y2), color, 1)
-        return result
+            (x1, y1, x2, y2) = line
+            cv2.line(img, (x1, y1), (x2, y2), color, 2)
 
     def draw_box(self, img, points, color=(255,0,0)):
         ''' Draw a rectangle on img, default color red
         points is the coordinates of opposite corners: (x0, y0, x1, y1)'''
-        result = img.copy()
         lines = []
         x0, y0, x1, y1 = points
         lines.append((x0, y0, x1, y0))
@@ -78,7 +75,6 @@ class Detector():
         lines.append((x1, y1, x0, y1))
         lines.append((x0, y1, x0, y0))
         self.draw_lines(img, lines, color)
-        return result
 
     @staticmethod
     def plot(img, gray=False):
@@ -112,14 +108,17 @@ class StaffLines(Detector):
             box = self.get_bounding_box(staff)
             self.staff_boxes.append(box)
 
+        self.small_boxes = self.staff_boxes[:]  # For debug purposes
         self.expand_staff_boxes()
         for box in self.staff_boxes:
             view = self.slice_staff(box)
             self.staff_views.append(view)
 
-        self.plot_staffs()  # Comment me to avoid a barrage of test plots
+#        self.staff_subplots()
+        self.draw_boxes('small_boxes')
 
-    def plot_staffs(self):
+    def staff_subplots(self):
+        ''' Display staffs in subplots of one plt.figure (bit awkward) '''
         fig = plt.figure()
         fig.suptitle(self.name, fontsize=20)
         for i, view in enumerate(self.staff_views):
@@ -127,6 +126,16 @@ class StaffLines(Detector):
             plt.title(f'Staff #{i+1}', loc='left')
             plt.axis('off')
             plt.imshow(view)
+        fig.show()
+
+    def draw_boxes(self, boxes='staff_boxes'):
+        ''' Highlight detected staffs with red borders (much cleaner)
+        small_boxes: as initially detected, staff_boxes: after expansion '''
+        fig = plt.figure()
+        img = self.image.copy()
+        for box in getattr(self, boxes, self.staff_boxes):
+            self.draw_box(img, box)
+        plt.imshow(img)
         fig.show()
 
     def probe_image(self, param, max_gap):
