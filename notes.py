@@ -12,12 +12,13 @@ for l, v in zip(LETTERS, VALUES):
     VALUE[l] = v
     NAME[v] = l
 
-#VALUE = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-#NAME = {0: 'C', 2:'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 11: 'B'}
 ACCIDENTAL = {'b': -1, '#': 1}
 
 
 class Pitch():
+    ''' A Pitch represents a particular musical tone. It contains
+    information about their relationships to one another, as well as
+    naming conventions and potential fretboard locations. '''
     def __init__(self, pitch):
         ''' Accepts string format: {letter}{#/b}{octave}, e.g. C4, E#2, Ab4
         and numerical format: middle C/C4 = 0, +/- 1 per half-step '''
@@ -103,6 +104,7 @@ class Pitch():
 
 
 class Note(Pitch):
+    ''' A Note is a Pitch plus an appropriate time duration value '''
     durations = {'W': 1, 'H': 1/2, 'Q': 1/4, 'E': 1/8, 'S': 1/16, 'T': 1/32}
     def __init__(self, *args, t='Q', **kwargs):
         super().__init__(*args, **kwargs)
@@ -117,6 +119,8 @@ class Note(Pitch):
 
 
 class Chord():
+    ''' A Chord is a set of concurrent Notes. Its duration is equal to that
+    of its shortest note, since tab sacrifices timing info for readability '''
     def __init__(self, note_list):
         self.notes = []
         self.shapes = []
@@ -143,6 +147,7 @@ class Chord():
 
     @ property
     def shape(self):
+        ''' Minimizes Hand.strain to return the easiest shape of this chord'''
         best = None
         for shape in self.shapes:
             h = Hand(shape)
@@ -152,39 +157,13 @@ class Chord():
             except AttributeError: best = h
         return best.shape
 
-    def fret_sum(self):
-        '''Sum the absolute fret values of each note in each shape
-        Return a dict of total fret values mapped to lists of shapes'''
-        result = {}
-        for shape in self.shapes:
-            total = sum(i[1] for i in shape)
-            try:
-                result[total].append(shape)
-            except KeyError:
-                result[total] = [shape]
-        return result
-
-    def span_sum(self):
-        '''Sum the difference of each fret and the lowest fret in a shape
-        Return a dict of total span mapped to lists of shapes'''
-        result = {}
-        for shape in self.shapes:
-            capo =  min(i[1] for i in shape)
-            total = sum(i[1] - capo for i in shape)
-            try:
-                result[total].append(shape)
-            except KeyError:
-                result[total] = [shape]
-        return result
-
 
 class Hand():
-    ''' Seeks to manage valid placement of fingers via the following axioms:
+    ''' Seeks to manage valid placement of Fingers via the following axioms:
     - Open notes are always allowed, as long as the string is not in use.
     - No finger may occupy a lower fret than any lower-numbered finger.
     - Fingers may share a fret, if the higher finger is on a higher string.
-    - Finger 0 may barre all strings above its target at the same fret.
-    '''
+    - Finger 0 may barre all strings above its target at the same fret. '''
     def __init__(self, initial=None):
         self.capo = 0
         self.barre = False
@@ -199,6 +178,8 @@ class Hand():
 
     @property
     def shape(self):
+        ''' Outputs a tab-compatible list of tuples: [(string, fret)]
+        describing the locations of its Fingers in a given fingering shape'''
         shape = [(s, 0) for s in self.open_strings]  # Add open notes right away
         for f in self.fingers:
             if f.down:
@@ -277,6 +258,8 @@ class Hand():
 
 
 class Finger():
+    ''' A Finger is controlled by a Hand, but handles simpler fretboard
+    maneuvers on its own, calculating relative difficulty of movement '''
     def __init__(self, string=None, fret=None):
         if string in range(6) and type(fret) is int and fret > 0:
             self.position = (string, fret)
