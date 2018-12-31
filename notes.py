@@ -51,6 +51,9 @@ class Pitch():
         else:
             return self  # otherwise no effect
 
+    def __lt__(self, other):  # For sorting purposes
+        return self.value < other.value
+
     def get_low_fret(self, capo=0):
         '''Return fret with the lowest value still greater than capo'''
         for fret in self.frets[::-1]:  # Assumes frets are sorted by string
@@ -135,6 +138,9 @@ class Chord():
                 self.shapes.append(sorted(shape))
 #        self.shapes.sort()
 
+    def __repr__(self):
+        return str([note.name for note in sorted(self.notes)])
+
     @ property
     def shape(self):
         # Need  to implement a way to pick the best option from self.shapes
@@ -207,7 +213,7 @@ class Hand():
         ''' Strain increases by 1 for every unit a finger strays from "home"
         Frets' home is x, x+1, x+2, and x+3 by finger, with index at x
         Strings' home is either string adjacent to the previous finger's
-        Barres add 1 per extra string fretted, regardless of distance'''
+        Barres add 1 per extra string fretted, regardless of distance '''
         strain = 0
         for a, b in zip(self.fingers[:-1], self.fingers[1:]):
             try:

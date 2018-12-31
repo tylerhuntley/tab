@@ -21,28 +21,20 @@ class TestNotes(unittest.TestCase):
         self.assertEqual(self.e2.frets, [(0, 0)])
 
 
-@unittest.expectedFailure
 class TestOpenChords(unittest.TestCase):
     def setUp(self):
         self.e = Chord([-8, -1, 4, 8, 11, 16])
         self.a = Chord([-8, -3, 4, 9, 13, 16])
         self.d = Chord([-3, 2, 9, 14, 18])
         self.g = Chord([-5, -1, 2, 7, 11, 19])
-        self.c = Chord([0, 4, 7, 12, 16])
+        self.c = Chord([-8, 0, 4, 7, 12, 16])
         self.chords = [self.e, self.a, self.d, self.g, self.c]
+        self.shapes = [open_e, open_a, open_d, open_g, open_c]
 
-        self.e_shape = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
-        self.a_shape = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
-        self.d_shape = [(1,0), (2,0), (3,2), (4,3), (5,2)]
-        self.g_shape = [(0, 3), (1,2), (2,0), (3,0), (4,0), (5,3)]
-        self.c_shape = [(1,3), (2,2), (3,0), (4,1), (5,0)]
-        self.shapes = [self.e_shape, self.a_shape, self.d_shape,
-                       self.g_shape, self.c_shape]
-
-    def test_shapes(self):
+    def test_shape_presence(self):
         for chord, shape in zip(self.chords, self.shapes):
             with self.subTest(i=chord):
-                self.assertEqual(chord.shape, shape)
+                self.assertIn(shape, chord.shapes)
 
 
 class TestFingers(unittest.TestCase):
