@@ -44,10 +44,8 @@ class TestOpenChords(unittest.TestCase):
             with self.subTest(i=chord):
                 self.assertEqual(chord.shape, shape)
 
-class TestFingers(unittest.TestCase):
-    def setUp(self):
-        self.f = Finger()
 
+class TestFingers(unittest.TestCase):
     def test_null_finger(self):
         self.assertEqual(Finger().position, None)
         self.assertEqual(Finger().string, None)
@@ -86,7 +84,6 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[0].move((4, 1))
         h.fingers[1].move((2, 2))
         h.fingers[2].move((1, 3))
-        open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
         self.assertEqual(h.shape, open_c)
 
     def test_manual_open_a_shape(self):
@@ -95,7 +92,6 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[0].move((2, 2))
         h.fingers[1].move((3, 2))
         h.fingers[2].move((4, 2))
-        open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
         self.assertEqual(h.shape, open_a)
 
     def teat_manual_open_g_shape(self):
@@ -104,7 +100,6 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[0].move((1, 2))
         h.fingers[1].move((0, 3))
         h.fingers[2].move((5, 3))
-        open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
         self.assertEqual(h.shape, open_g)
 
     def test_manual_open_e_shape(self):
@@ -113,7 +108,6 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[0].move((3, 1))
         h.fingers[1].move((1, 2))
         h.fingers[2].move((2, 2))
-        open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
         self.assertEqual(h.shape, open_e)
 
     def test_manual_open_d_shape(self):
@@ -122,7 +116,6 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[0].move((3, 2))
         h.fingers[1].move((4, 3))
         h.fingers[2].move((5, 2))
-        open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
         self.assertEqual(h.shape, open_d)
 
     def test_manual_barre_a_shape(self):
@@ -132,7 +125,6 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[1].move((1, 7))
         h.fingers[2].move((2, 7))
         h.fingers[3].move((3, 6))
-        barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
         self.assertEqual(h.shape, barre_a)
 
     def test_manual_barre_b_shape(self):
@@ -142,47 +134,65 @@ class TestManualHandShapes(unittest.TestCase):
         h.fingers[1].move((2, 4))
         h.fingers[2].move((3, 4))
         h.fingers[3].move((4, 4))
-        barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
         self.assertEqual(h.shape, barre_b)
 
 
 class TestInitHandShapes(unittest.TestCase):
     def test_init_open_c_shape(self):
-        open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
         h = Hand(open_c)
         self.assertEqual(h.shape, open_c)
 
     def test_init_open_a_shape(self):
-        open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
         h = Hand(open_a)
         self.assertEqual(h.shape, open_a)
 
     def test_init_open_g_shape(self):
-        open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
         h = Hand(open_g)
         self.assertEqual(h.shape, open_g)
 
     def test_init_open_e_shape(self):
-        open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
         h = Hand(open_e)
         self.assertEqual(h.shape, open_e)
 
     def test_init_open_d_shape(self):
-        open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
         h = Hand(open_d)
         self.assertEqual(h.shape, open_d)
 
     def test_init_barre_a_shape(self):
-        barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
         h = Hand(barre_a)
         self.assertEqual(h.shape, barre_a)
 
     def test_init_barre_b_shape(self):
-        barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
         h = Hand(barre_b)
         self.assertEqual(h.shape, barre_b)
 
 
+class TestHandMoves(unittest.TestCase):
+    def test_barred_slide_up_f_to_a(self):
+        h = Hand(barre_f)
+        self.assertEqual(h.move(barre_a), 4)
+
+    def test_barred_slide_down_a_to_f(self):
+        h = Hand(barre_a)
+        self.assertEqual(h.move(barre_f), 4)
+
+    def test_chord_change_c_to_g(self):
+        h = Hand(open_c)
+        self.assertEqual(h.move(open_g), 11)
+
+    def test_chord_change_e_to_a(self):
+        h = Hand(open_e)
+        self.assertEqual(h.move(open_a), 8)
+
+
 if __name__ == '__main__':
+    open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
+    open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
+    open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
+    open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+    open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
+    barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
+    barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
+    barre_f = [(0,1), (1,3), (2,3), (3,2), (4,1), (5,1)]
 
     unittest.main()

@@ -227,7 +227,9 @@ class Hand():
 
         # Barre the index finger if necessary/possible
         barred = [note for note in new-done if note[1] == i_fret]
-        if barred:
+        # Don't barre if open notes are needed above index finger
+        blocked = [n for n in done if n[1] < i_fret and n[0] > i_pos[0]]
+        if barred and not blocked:
             self.barre = True
             [done.add(note) for note in barred]
 
