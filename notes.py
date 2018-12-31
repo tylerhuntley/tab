@@ -194,18 +194,26 @@ class Hand():
 
     @property
     def strain(self):
-        ''' Strain increases by 1 for every unit a finger strays from "home"
+        ''' Strain represents the inherent difficulty of a given shape.
+        Strain increases by 1 for every unit a finger strays from "home"
         Frets' home is x, x+1, x+2, and x+3 by finger, with index at x
         Strings' home is either string adjacent to the previous finger's
-        Barres add 1 per extra string fretted, regardless of distance '''
+        Barres add 1 per extra string fretted, regardless of distance
+        Frets above 12 add 1 extra strain per fret per finger '''
         strain = 0
+        # Shape strain
         for a, b in zip(self.fingers[:-1], self.fingers[1:]):
             try:
                 strain += abs(b.fret - (a.fret+1))
                 strain += max((abs(b.string - a.string) - 1), 0)
             except TypeError: continue
+        # Barre strain
         if self.barre:
             strain += len([n for n in self.shape if n[1] == self.index]) - 1
+        # High note strain
+        for f in self.fingers:
+            if f.down and f.fret > 12:
+                strain += f.fret - 12
         return strain
 
     def move(self, new):
