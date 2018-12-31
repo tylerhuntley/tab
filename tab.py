@@ -154,6 +154,9 @@ class Tab():
     def __repr__(self):
         return '\n'.join(str(staff) for staff in self.staffs)+'\n'
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
     def add_bar(self, bar):
         '''Add bar to last staff, wrap to new staff if past MAX_WIDTH '''
         if len(self.staffs[-1]) >= MAX_WIDTH:
@@ -172,6 +175,56 @@ class Tab():
     def add_run(self, frets, duration):
         for fret in frets:
             self.add_fret(fret, duration)
+
+
+class Arrangement():
+    ''' An Arrangement is similar to a Song, but consists of specific
+    fingering patterns, with durations, for transcription to tablature '''
+    def __init__(self):
+        self.notes = []
+        self.tab = Tab()
+
+    def add(self, note):
+        ''' note should be a nested tuple: ((string, fret), duration)'''
+        self.notes.append(note)
+
+    def transcribe(self):
+        for note in self.notes:
+            n, d = note
+            if type(n) is list:
+                self.tab.add_frets(n, d)
+            elif type(n) is tuple:
+                self.tab.add_fret(n, d)
+        return self.tab
+
+
+class Song():
+    ''' A Song is an ordered list of Note/Chord objects with their
+    respective durations, played in order to produce music '''
+    def __init__(self):
+        self.notes= []
+
+    def add(self, obj):
+        if isinstance(obj, (Note, Chord)):
+            self.notes.append(obj)
+        else:
+            try: self.notes.append(Note(obj))
+            except (TypeError, AttributeError): pass
+
+
+class Guitarist():
+    ''' The Guitarist is responsible for reading a Song, and producing
+    an Arrangement by guiding a Hand along the easiest route through
+    the possible shapes of the musical objects it contains. '''
+    def __init__(self, song=None):
+        if song:
+            self.play(song)
+
+    def play(self, song):
+        ''' This is a shortest path algorithm, using possible shapes as
+        path nodes, and a combination of Hand.strain and Hand.move
+        difficulty as its path lengths. Particular algorithm TBD. '''
+        pass
 
 
 if __name__ == '__main__':
