@@ -147,15 +147,40 @@ class TestManualHandShapes(unittest.TestCase):
 
 
 class TestInitHandShapes(unittest.TestCase):
-    def test_open_c_shape(self):
+    def test_init_open_c_shape(self):
         open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
         h = Hand(open_c)
         self.assertEqual(h.shape, open_c)
 
-    def test_open_a_shape(self):
+    def test_init_open_a_shape(self):
         open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
         h = Hand(open_a)
         self.assertEqual(h.shape, open_a)
+
+    def test_init_open_g_shape(self):
+        open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
+        h = Hand(open_g)
+        self.assertEqual(h.shape, open_g)
+
+    def test_init_open_e_shape(self):
+        open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+        h = Hand(open_e)
+        self.assertEqual(h.shape, open_e)
+
+    def test_init_open_d_shape(self):
+        open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
+        h = Hand(open_d)
+        self.assertEqual(h.shape, open_d)
+
+    def test_init_barre_a_shape(self):
+        barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
+        h = Hand(barre_a)
+        self.assertEqual(h.shape, barre_a)
+
+    def test_init_barre_b_shape(self):
+        barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
+        h = Hand(barre_b)
+        self.assertEqual(h.shape, barre_b)
 
 
 if __name__ == '__main__':

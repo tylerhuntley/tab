@@ -213,10 +213,10 @@ class Hand():
         [done.add((i, 0)) for i in self.open_strings]
 
         # Place the index (i) finger (and slide whole hand with it)
-        p_pos = min(note[1] for note in new if note[1] > 0)
-        i_pos = sorted(note for note in new if note[1] == p_pos)[0]
-        try: slide = p_pos - self.index
-        except TypeError: slide = p_pos
+        i_fret = min(note[1] for note in new if note[1] > 0)
+        i_pos = sorted(note for note in new if note[1] == i_fret)[0]
+        try: slide = i_fret - self.index
+        except TypeError: slide = i_fret  # This is probably wrong
         difficulty += self.fingers[0].move(i_pos)
         done.add(i_pos)
 
@@ -225,9 +225,15 @@ class Hand():
             try: f.move((f.string, f.fret + slide))
             except TypeError: continue
 
+        # Barre the index finger if necessary/possible
+        barred = [note for note in new-done if note[1] == i_fret]
+        if barred:
+            self.barre = True
+            [done.add(note) for note in barred]
+
         # Place the middle (m) finger, at cost
         try:
-            m_fret = min(note[1] for note in new-done if note[1] >= p_pos)
+            m_fret = min(note[1] for note in new-done if note[1] >= i_fret)
             m_pos = sorted(note for note in new-done if note[1] == m_fret)[0]
             difficulty += self.fingers[1].move(m_pos)
             done.add(m_pos)
