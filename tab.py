@@ -46,10 +46,12 @@ class Bar():
                 padding = int(length - len(str(fret)))
                 # Reverse string order, add a #, and pad with '-' to length
                 lines[5-string] += str(fret) + '-' * padding
+        # Pad to width if not full
         for i in range(len(lines)):
             lines[i] += '-' * int(width + 1 - len(lines[i]))
-            lines[i] += '|'
-        return '\n'.join(lines)+'\n'
+        # Trim to width if overfull
+        temp = [line[:width+1]+'|' for line in lines]
+        return '\n'.join(temp)+'\n'
 
     def __eq__(self, other):
         return str(self) == str(other)
@@ -67,6 +69,9 @@ class Bar():
     def is_full(self):
         ''' Bar is full one it has at least 1 bar's worth of note duration '''
         return round(sum(t for _, t in self.notes), 3) >= 1
+
+    def time_left(self):
+        return 1 - sum(t for _, t in self.notes)
 
     def add_frets(self, frets, duration):
         '''Frets must be a list of either integer fret values or None
@@ -126,6 +131,7 @@ class Tab():
 
     def add_frets(self, frets, duration):
         ''' frets is a list of tuples: (string, fret), duration is a float'''
+        # Start a new bar if last one is already full
         if self.last_bar.is_full():
             self.last_bar = Bar(width=self.width)
             self.add_bar(self.last_bar)
@@ -133,7 +139,13 @@ class Tab():
         temp = [None] * 6
         for string, fret in frets:
             temp[string] = fret
+        diff = duration - self.last_bar.time_left()
         self.last_bar.add_frets(temp, duration)
+        # Add remaining duration to a new bar if note is too long
+        if diff > 0:
+            self.last_bar = Bar(width=self.width)
+            self.last_bar.add_frets([None]*6, diff)
+            self.add_bar(self.last_bar)
 
     def add_fret(self, fret, duration):
         self.add_frets([fret], duration)
