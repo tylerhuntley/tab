@@ -1,20 +1,19 @@
 import unittest
-import itertools as it
 import tab
 from notes import Note
 
 
 class TestBlankStaticBars(unittest.TestCase):
     def setUp(self):
-        self.bar = tab.Bar()
+        self.bar = tab.Bar(width=32)
         self.staff = tab.Staff()
-        self.tabs = tab.Tab()
+        self.tabs = tab.Tab(width=32)
 
     def test_null_bar(self):
-        self.assertEqual(str(self.bar), f"|{' ' * 32}|\n" * 6)
+        self.assertEqual(self.bar, f"|{'-' * 32}|\n" * 6)
 
     def test_null_staff(self):
-        self.assertEqual(str(self.staff), '\n')
+        self.assertEqual(str(self.staff), '')
 
     def test_blank_staff(self):
         """ Test 1-4 empty bars on a single, long staffline. """
@@ -42,144 +41,143 @@ class TestBlankStaticBars(unittest.TestCase):
 
 class TestDynamicBars(unittest.TestCase):
     def test_null_bar(self):
-        bar = tab.Bar(width=tab.MIN_WIDTH)
-        self.assertEqual(bar, f"|{' ' * tab.MIN_WIDTH}|\n" * 6)
+        bar = tab.Bar()
+        self.assertEqual(bar, f"|{'-' * tab.MIN_WIDTH}|\n" * 6)
 
     # The following use improper notes arguments, for testing, for now.
     def test_whole_note(self):
-        bar = tab.Bar(notes=[(0, 1)])
-        bar.add_fret((0, 0), 1)
+        bar = tab.Bar()
+        bar.add_frets((0, None, None, None, None, None), 1)
         try: self.assertEqual(len(bar), 8+2)
         except AssertionError as e:
             print(f'Dynamic whole notes:\n{bar}')
             raise e
 
     def test_half_note(self):
-        bar = tab.Bar(notes=[(0, 1/2)])
+        bar = tab.Bar()
         for i in range(2):
-            bar.add_fret((0, 0), 1/2)
+            bar.add_frets((0, None, None, None, None, None), 1/2)
         try: self.assertEqual(len(bar), 8+2)
         except AssertionError as e:
             print(f'Dynamic half notes:\n{bar}')
             raise e
 
     def test_quarter_note(self):
-        bar = tab.Bar(notes=[(0, 1/4)])
+        bar = tab.Bar()
         for i in range(4):
-            bar.add_fret((0, 0), 1/4)
+            bar.add_frets((0, None, None, None, None, None), 1/4)
         try: self.assertEqual(len(bar), 16+2)
         except AssertionError as e:
             print(f'Dynamic quarter notes:\n{bar}')
             raise e
 
     def test_eighth_note(self):
-        bar = tab.Bar(notes=[(0, 1/8)])
+        bar = tab.Bar()
         for i in range(8):
-            bar.add_fret((0, 0), 1/8)
+            bar.add_frets((0, None, None, None, None, None), 1/8)
         try: self.assertEqual(len(bar), 32+2)
         except AssertionError as e:
             print(f'Dynamic eighth notes:\n{bar}')
             raise e
 
     def test_sixteenth_note(self):
-        bar = tab.Bar(notes=[(0, 1/16)])
+        bar = tab.Bar()
         for i in range(16):
-            bar.add_fret((0, 0), 1/16)
+            bar.add_frets((0, None, None, None, None, None), 1/16)
         try: self.assertEqual(len(bar), 64+2)
         except AssertionError as e:
             print(f'Dynamic sixteenth notes:\n{bar}')
             raise e
 
 
+#@unittest.expectedFailure
 class TestStaticBars(unittest.TestCase):
     def test_length_limit(self):
         ''' Ensure notes added beyond 1 bars-length are ignored'''
-        bar_0 = tab.Bar()
-        bar_0.add_fret((0, 0), 1)
+        bar_0 = tab.Bar(width=32)
+        bar_0.add_frets((0, None, None, None, None, None), 1)
         for line in bar_0.lines:
             self.assertEqual(len(line), 34)
 
-        bar_1 = tab.Bar()
-        bar_1.add_fret((0, 0), 1)
-        bar_1.add_fret((0, 0), 1)
+        bar_1 = tab.Bar(width=32)
+        bar_1.add_frets((0, None, None, None, None, None), 1)
+        bar_1.add_frets((0, None, None, None, None, None), 1)
         for line in bar_1.lines:
             self.assertEqual(len(line), 34)
 
-        bar_4 = tab.Bar()
+        bar_4 = tab.Bar(width=32)
         for i in range(5):
-            bar_4.add_fret((0, 0), 1/4)
+            bar_4.add_frets((0, None, None, None, None, None), 1/4)
         for line in bar_4.lines:
             self.assertEqual(len(line), 34)
 
-        bar_16 = tab.Bar()
+        bar_16 = tab.Bar(width=32)
         for i in range(17):
-            bar_16.add_fret((0, 0), 1/16)
+            bar_16.add_frets((0, None, None, None, None, None), 1/16)
         for line in bar_16.lines:
-            self.assertEqual(len(line), 34)
+            self.assertEqual(len(line), 66)
 
-    def test_additions(self):
-        ''' Adding the same note different ways yields equal bars '''
-        bars = [tab.Bar() for i in range(4)]
-        bars[0].add(Note('E3', t='Q'))
-        bars[1].add_fret((0, 0), 1/4)
-        bars[2].add_frets([(0, 0)], 1/4)
-        bars[3].add_run([(0, 0)], 1/4)
-        for combo in it.combinations(bars, 2):
-            self.assertEqual(*combo)
 
     def test_E_major_scale(self):
         ''' Add eighth Notes manually, one by one '''
-        scale = tab.Bar()
-        scale.add(Note('E3', t='E'))
-        scale.add(Note('F#3', t='E'))
-        scale.add(Note('G#3', t='E'))
-        scale.add(Note('A3', t='E'))
-        scale.add(Note('B3', t='E'))
-        scale.add(Note('C#4', t='E'))
-        scale.add(Note('D#4', t='E'))
-        scale.add(Note('E4', t='E'))
-        try: self.assertEqual(scale, '|--------------------------------|\n'
+        bar = tab.Bar()
+        notes = ((0,0), (0,2), (0,4), (1,0), (1,2), (1,4), (2,1), (2,2))
+        for note in notes:
+            temp = [None] * 6
+            string, fret = note
+            temp[string] = fret
+            bar.add_frets(temp, 1/8)
+        try: self.assertEqual(bar, '|--------------------------------|\n'
                                 '|--------------------------------|\n'
                                 '|--------------------------------|\n'
                                 '|------------------------1---2---|\n'
                                 '|------------0---2---4-----------|\n'
                                 '|0---2---4-----------------------|\n')
         except AssertionError as e:
-            print(f'Static E major, one bar:\n{scale}')
+            print(f'Static E major, one bar:\n{bar}')
             raise e
 
     def test_A_major_scale(self):
         ''' Test add_run using Note addition '''
         root = Note('A3')
         major = (0, 2, 4, 5, 7, 9, 11, 12)
-        scale = tab.Bar()
-        scale.add_run([(root + i).get_low_fret() for i in major], 1/8)
-        try: self.assertEqual(scale,'|--------------------------------|\n'
+        bar = tab.Bar()
+        for i in major:
+            temp = [None] * 6
+            string, fret = (root + i).get_low_fret()
+            temp[string] = fret
+            bar.add_frets(temp, 1/8)
+        try: self.assertEqual(bar,'|--------------------------------|\n'
                                '|--------------------------------|\n'
                                '|------------------------1---2---|\n'
                                '|------------0---2---4-----------|\n'
                                '|0---2---4-----------------------|\n'
                                '|--------------------------------|\n')
         except AssertionError as e:
-            print(f'Static A major, one bar:\n{scale}')
+            print(f'Static A major, one bar:\n{bar}')
             raise e
 
     def test_D_major_scale(self):
         ''' Test add_run using list of Note names '''
         D_major = ('D4', 'E4', 'F#4', 'G4', 'A4', 'B4', 'C#5', 'D5')
-        scale = tab.Bar()
-        scale.add_run([Note(i).get_low_fret() for i in D_major], 1/8)
-        try: self.assertEqual(scale,'|--------------------------------|\n'
+        bar = tab.Bar()
+        for note in D_major:
+            temp = [None] * 6
+            string, fret = Note(note).get_low_fret()
+            temp[string] = fret
+            bar.add_frets(temp, 1/8)
+        try: self.assertEqual(bar,'|--------------------------------|\n'
                                '|--------------------0---2---3---|\n'
                                '|------------0---2---------------|\n'
                                '|0---2---4-----------------------|\n'
                                '|--------------------------------|\n'
                                '|--------------------------------|\n')
         except AssertionError as e:
-            print(f'Static D major, one bar:\n{scale}')
+            print(f'Static D major, one bar:\n{bar}')
             raise e
 
 
+#@unittest.expectedFailure
 class TestTabs(unittest.TestCase):
     def test_two_bars(self):
         tabs = tab.Tab()
@@ -187,12 +185,12 @@ class TestTabs(unittest.TestCase):
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         tabs.add_run([(root + i).get_low_fret() for i in major], 1/4)
         try: self.assertEqual(tabs,
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|----------------1-------2-------|\n'
-'|------------------------0-------|2-------4-----------------------|\n'
-'|0-------2-------4---------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n\n')
+'|----------------|----------------|\n'
+'|----------------|----------------|\n'
+'|----------------|--------1---2---|\n'
+'|------------0---|2---4-----------|\n'
+'|0---2---4-------|----------------|\n'
+'|----------------|----------------|\n\n')
         except AssertionError as e:
             print(f'Static A major, two bars:\n{tabs}')
             raise e
@@ -203,23 +201,17 @@ class TestTabs(unittest.TestCase):
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         tabs.add_run([(root + i).get_low_fret() for i in major], 1/2)
         try: self.assertEqual(tabs,
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|----------------0---------------|\n'
-'|0---------------2---------------|4-------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|1---------------2---------------|\n'
-'|2---------------4---------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n\n')
+'|--------|--------|--------|--------|\n'
+'|--------|--------|--------|--------|\n'
+'|--------|--------|--------|1---2---|\n'
+'|--------|----0---|2---4---|--------|\n'
+'|0---2---|4-------|--------|--------|\n'
+'|--------|--------|--------|--------|\n\n')
         except AssertionError as e:
             print(f'Static A major, four bars:\n{tabs}')
             raise e
 
+#@unittest.expectedFailure
 class TestArrangements(unittest.TestCase):
     def test_null_arrangement(self):
         arr = tab.Arrangement()
@@ -238,9 +230,8 @@ class TestArrangements(unittest.TestCase):
                     '|0---2---4-----------------------|\n\n')
         try: self.assertEqual(tabs, expected)
         except AssertionError as e:
-            print(f'E major, one bar:\n{tabs}')
+            print(f'E major scale, one bar:\n{tabs}')
             raise e
-
 
     # TODO Deal with notes tied across barlines (placeholder rests?)
     def test_chords(self):
@@ -255,17 +246,17 @@ class TestArrangements(unittest.TestCase):
             arr.add(i)
         tabs = arr.transcribe()
         try: self.assertEqual(tabs,
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|2-------5-------7---------------|2-------5-------9---7-----------|\n'
-'|2-------5-------7---------------|2-------5-------9---7-----------|\n'
-'|0-------3-------5---------------|0-------3-------7---5-----------|\n\n')
+'|----------------|------------------------------------|\n'
+'|----------------|------------------------------------|\n'
+'|----------------|------------------------------------|\n'
+'|2---5---7-------|2-------5-------9---7---------------|\n'
+'|2---5---7-------|2-------5-------9---7---------------|\n'
+'|0---3---5-------|0-------3-------7---5---------------|\n\n')
         except AssertionError as e:
             print(f'Smoke on the Water, two bars:\n{tabs}')
             raise e
 
-    @unittest.expectedFailure  # TODO deal with 3/4 time incomplete bars
+#    @unittest.expectedFailure  # TODO deal with 3/4 time incomplete bars
     def test_mixed_notes(self):
         ''' Sixth notes? Tab() will need to handle 3/4 time as well '''
         arr = tab.Arrangement()
@@ -277,12 +268,13 @@ class TestArrangements(unittest.TestCase):
             arr.add(note)
         tabs = arr.transcribe()
         try: self.assertEqual(tabs,
-'|--------------------------------|--------------------------------|\n'
-'|0---------1---------3-----------|12----------12------12----------|\n'
-'|-----0---------0---------0------|--------0---------------0-------|\n'
-'|--------------------------------|--------------------------------|\n'
-'|----------0---------2-----------|10--------------10--------------|\n'
-'|3-------------------------------|--------------------------------|\n\n')
+'|------------------------|--------------------------------|\n'
+'|0-------1-------3-------|12----------12------12----------|\n'
+'|----0-------0-------0---|--------0---------------0-------|\n'
+'|------------------------|--------------------------------|\n'
+'|--------0-------2-------|10--------------10--------------|\n'
+'|3-----------------------|--------------------------------|\n\n')
+
         except AssertionError as e:
             print(f'Blackbird, two bars:\n{tabs}')
             raise e
