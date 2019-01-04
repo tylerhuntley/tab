@@ -108,14 +108,16 @@ class Staff():
         self.bars.append(bar)
 
 
-class Tab():
-    '''Directs staff concatenation, manages line length/page display'''
+class Arrangement():
+    ''' An Arrangement is similar to a Song, but consists of specific
+    fingering patterns, with durations, for transcription to tablature
+    by managing staff concatenation and line length/page display'''
     def __init__(self, width=MIN_WIDTH):
         self.width = width
         self.last_bar = Bar(width=self.width)
-        self.min_duration = 1
         self.bars = [self.last_bar]
         self.staffs = [Staff(self.last_bar)]
+        self.notes = []
 
     def __repr__(self):
         return '\n'.join(str(staff) for staff in self.staffs)+'\n'
@@ -146,6 +148,7 @@ class Tab():
             self.last_bar = Bar(width=self.width)
             self.last_bar.add_frets([None]*6, diff)
             self.add_bar(self.last_bar)
+        self.notes.append((frets, duration))
 
     def add_fret(self, fret, duration):
         self.add_frets([fret], duration)
@@ -153,27 +156,6 @@ class Tab():
     def add_run(self, frets, duration):
         for fret in frets:
             self.add_fret(fret, duration)
-
-
-class Arrangement():
-    ''' An Arrangement is similar to a Song, but consists of specific
-    fingering patterns, with durations, for transcription to tablature '''
-    def __init__(self):
-        self.notes = []
-        self.tab = Tab()
-
-    def add(self, note):
-        ''' note should be a nested tuple: ((string, fret), duration)'''
-        self.notes.append(note)
-
-    def transcribe(self):
-        for note in self.notes:
-            n, d = note
-            if type(n) is list:
-                self.tab.add_frets(n, d)
-            elif type(n) is tuple:
-                self.tab.add_fret(n, d)
-        return self.tab
 
 
 class Song():
