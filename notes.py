@@ -33,7 +33,7 @@ class Pitch():
             self.name[-2].lower()
             self.name[0].upper()
 
-        self.frets = self.get_frets()
+        self.shapes = self.get_shapes()
 
     def __repr__(self):
         return f"Note('{self.name}') - Value: {self.value}"
@@ -56,10 +56,10 @@ class Pitch():
         return self.value < other.value
 
     def get_low_fret(self, capo=0):
-        '''Return fret with the lowest value still greater than capo'''
-        for fret in self.frets[::-1]:  # Assumes frets are sorted by string
-            if fret[1] >= capo:
-                return fret
+        '''Return shape with the lowest fret value still greater than capo'''
+        for shape in self.shapes[::-1]:  # Assumes shapes are sorted by string
+            if shape.list_tuples()[0][1] >= capo:
+                return shape
 
     def get_name(self):
         ''' Convert integer value to note name.'''
@@ -93,14 +93,14 @@ class Pitch():
             return None
         return value
 
-    def get_frets(self, tuning=STD_TUNING):
-        ''' Return list of tuples of possible string and fret combinations'''
-        frets = []
+    def get_shapes(self, tuning=STD_TUNING):
+        ''' Return a list of potential Shape objects for this Pitch '''
+        shapes = []
         for string, value in enumerate(tuning):
             if self.value >= LOW_E + value:
                 fret = self.value - LOW_E - value
-                frets.append((string, fret))
-        return frets
+                shapes.append(Shape((string, fret)))
+        return shapes
 
 
 class Note(Pitch):
@@ -116,6 +116,60 @@ class Note(Pitch):
         except IndexError:
             print("Invalid duration: {W|H|Q|E|S|T}. Default to quarter note ('Q')")
             self.duration = 1/4
+
+
+class Shape():
+    ''' Intended to simplify communication of fretboard coordinates'''
+    def __init__(self, shape=None):
+        '''Converts and stores shape as a fret-list by default'''
+        self.shape = [None] * 6
+        if shape is None: return
+        elif all((type(i) is int or i is None for i in shape)):
+            # Fret-list, e.g. open D: [None, 0, 0, 2, 3, 2]
+            if len(shape) == 6:
+                self.shape = list(shape)
+            # Single tuple: (string, fret)
+            elif len(shape) == 2 and not any((i is None for i in shape)):
+                self.shape = [None]*6
+                self.shape[shape[0]] = shape[1]
+        # List of tuples: [(string, fret), ...]
+        elif type(shape) is list and all((type(i) is tuple for i in shape)):
+            self.shape = [None]*6
+            for string, fret in shape:
+                self.shape[string] = fret
+
+    def __repr__(self):
+        return str(self.shape)
+
+    def __eq__(self, other):
+        try:
+            return self.shape == other.shape
+        except AttributeError:
+            return self.shape == Shape(other).shape
+        return False
+
+    def __len__(self):
+        return len([i for i in self.shape if i is not None])
+
+    def __add__(self, other):
+        ''' Combine two shapes, using the higher value for each string '''
+        temp = []
+        for a, b in zip(self.shape, other.shape):
+            if a is None and b is None:
+                temp.append(None)
+            elif a is None:
+                temp.append(b)
+            elif b is None:
+                temp.append(a)
+            else:
+                temp.append(max(a, b))
+        return Shape(temp)
+
+    def list_frets(self):
+        return self.shape
+
+    def list_tuples(self):
+        return [(s, f) for s, f in enumerate(self.shape) if f is not None]
 
 
 class Chord():
@@ -136,11 +190,13 @@ class Chord():
         self.duration = min(note.duration for note in self.notes)
 
         # Generate all possible fingering combinations
-        for shape in it.product(*[note.frets for note in self.notes]):
-            # Eliminate those that play two or more notes on one string
-            if len({i[0] for i in shape}) == len([i[0] for i in shape]):
-                self.shapes.append(sorted(shape))
-#        self.shapes.sort()
+        for shapes in it.product(*[note.shapes for note in self.notes]):
+            shape = Shape()
+            for i in shapes:
+                shape += i
+            # Only allow shapes that hit every note
+            if len(shape) == len(self.notes):
+                self.shapes.append(shape)
 
     def __repr__(self):
         return str([note.name for note in sorted(self.notes)])
@@ -216,15 +272,20 @@ class Hand():
                 strain += f.fret - 12
         return strain
 
-    def move(self, new):
-        ''' Move hand to new shape: a list of tuples (string, fret)
+    def move(self, shape):
+        ''' Move hand to a new Shape
         Return an integer representing the difficulty of the transition'''
         difficulty = 0
-        new = set(new)
+        if isinstance(shape, Shape):
+            new = set(shape.list_tuples())
+        else:
+            new = set(shape)
         done = set()
+
         # Open strings are free
         self.open_strings = [note[0] for note in new if note[1] == 0]
         [done.add((i, 0)) for i in self.open_strings]
+        if done == new: return difficulty
 
         # Place the index (i) finger (and slide whole hand with it)
         i_fret = min(note[1] for note in new if note[1] > 0)

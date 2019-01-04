@@ -1,6 +1,6 @@
 import unittest
 import itertools as it
-from notes import Note, Chord, Finger, Hand
+from notes import Note, Chord, Finger, Hand, Shape
 
 
 class TestNotes(unittest.TestCase):
@@ -17,8 +17,8 @@ class TestNotes(unittest.TestCase):
         self.assertEqual(self.e2.value, -8)
 
     def test_frets(self):
-        self.assertEqual(self.e1.frets, [(0, 0)])
-        self.assertEqual(self.e2.frets, [(0, 0)])
+        self.assertEqual(self.e1.shapes, [(0, 0)])
+        self.assertEqual(self.e2.shapes, [(0, 0)])
 
 
 class TestChordShapes(unittest.TestCase):
@@ -156,6 +156,16 @@ class TestManualHandShapes(unittest.TestCase):
 
 
 class TestInitHandShapes(unittest.TestCase):
+    def test_single_notes(self):
+        for string, fret in it.product(range(5), range(19)):
+            with self.subTest(i=(string, fret)):
+                h = Hand([(string, fret)])
+                self.assertEqual(h.shape, [(string, fret)])
+
+    def test_all_open_shape(self):
+        h = Hand(all_open)
+        self.assertEqual(h.shape, all_open)
+
     def test_init_open_c_shape(self):
         h = Hand(open_c)
         self.assertEqual(h.shape, open_c)
@@ -186,6 +196,10 @@ class TestInitHandShapes(unittest.TestCase):
 
 
 class TestHandMoves(unittest.TestCase):
+    def test_null_move(self):
+        h = Hand(all_open)
+        self.assertEqual(h.move(all_open), 0)
+
     def test_barred_slide_up_f_to_a(self):
         h = Hand(barre_f)
         self.assertEqual(h.move(barre_a), 4)
@@ -204,6 +218,16 @@ class TestHandMoves(unittest.TestCase):
 
 
 class TestHandStrain(unittest.TestCase):
+    def test_null_strain(self):
+        h = Hand(all_open)
+        self.assertEqual(h.strain, 0)
+
+    def test_single_notes(self):
+        for string, fret in it.product(range(5), range(19)):
+            with self.subTest(i=(string, fret)):
+                h = Hand([(string, fret)])
+                self.assertEqual(h.strain, max(0, fret-12))
+
     def test_open_c_strain(self):
         h = Hand(open_c)
         self.assertEqual(h.strain, 1)
@@ -238,7 +262,69 @@ class TestHandStrain(unittest.TestCase):
         self.assertEqual(h.strain, 6)
 
 
+class TestShapeInit(unittest.TestCase):
+    def test_null_shape(self):
+        s = Shape()
+        self.assertEqual(s.list_frets(), [None]*6)
+        self.assertEqual(s.list_tuples(), [])
+
+    def test_single_notes(self):
+        for string, fret in it.product(range(5), range(19)):
+            with self.subTest(i=(string, fret)):
+                s = Shape([(string, fret)])
+                self.assertEqual(s.list_tuples(), [(string, fret)])
+                temp = [fret if string == i else None for i in range(6)]
+                self.assertEqual(s.list_frets(), temp)
+
+    def test_open_c_shape(self):
+        lst = [0, 3, 2, 0, 1, 0]
+        self.assertEqual(Shape(open_c).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), open_c)
+
+    def test_open_a_shape(self):
+        lst = [0, 0, 2, 2, 2, 0]
+        self.assertEqual(Shape(open_a).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), open_a)
+
+    def test_open_g_shape(self):
+        lst = [3, 2, 0, 0, 0, 3]
+        self.assertEqual(Shape(open_g).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), open_g)
+
+    def test_open_e_shape(self):
+        lst = [0, 2, 2, 1, 0, 0]
+        self.assertEqual(Shape(open_e).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), open_e)
+
+    def test_open_d_shape(self):
+        lst = [None, 0, 0, 2, 3, 2]
+        self.assertEqual(Shape(open_d).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), open_d)
+
+    def test_barre_b_shape(self):
+        lst = [2, 2, 4, 4, 4, 2]
+        self.assertEqual(Shape(barre_b).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), barre_b)
+
+    def test_barre_f_shape(self):
+        lst = [1, 3, 3, 2, 1, 1]
+        self.assertEqual(Shape(barre_f).list_frets(), lst)
+        self.assertEqual(Shape(lst).list_tuples(), barre_f)
+
+
+class TestShapeAddition(unittest.TestCase):
+    def test_null_shape(self):
+        self.assertEqual(Shape() + Shape(), Shape())
+
+    def test_all_open(self):
+        s = Shape()
+        for i in range(6):
+            s += Shape((i, 0))
+        self.assertEqual(s, Shape([0, 0, 0, 0, 0, 0]))
+
+
 if __name__ == '__main__':
+    all_open = [(0,0), (1,0), (2,0), (3,0), (4,0), (5,0)]
     open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
     open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
     open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
