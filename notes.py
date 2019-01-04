@@ -225,6 +225,7 @@ class Hand():
         # Open strings are free
         self.open_strings = [note[0] for note in new if note[1] == 0]
         [done.add((i, 0)) for i in self.open_strings]
+        if done == new: return difficulty
 
         # Place the index (i) finger (and slide whole hand with it)
         i_fret = min(note[1] for note in new if note[1] > 0)

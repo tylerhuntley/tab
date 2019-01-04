@@ -156,6 +156,16 @@ class TestManualHandShapes(unittest.TestCase):
 
 
 class TestInitHandShapes(unittest.TestCase):
+    def test_single_notes(self):
+        for string, fret in it.product(range(5), range(19)):
+            with self.subTest(i=(string, fret)):
+                h = Hand([(string, fret)])
+                self.assertEqual(h.shape, [(string, fret)])
+
+    def test_all_open_shape(self):
+        h = Hand(all_open)
+        self.assertEqual(h.shape, all_open)
+
     def test_init_open_c_shape(self):
         h = Hand(open_c)
         self.assertEqual(h.shape, open_c)
@@ -186,6 +196,10 @@ class TestInitHandShapes(unittest.TestCase):
 
 
 class TestHandMoves(unittest.TestCase):
+    def test_null_move(self):
+        h = Hand(all_open)
+        self.assertEqual(h.move(all_open), 0)
+
     def test_barred_slide_up_f_to_a(self):
         h = Hand(barre_f)
         self.assertEqual(h.move(barre_a), 4)
@@ -204,6 +218,16 @@ class TestHandMoves(unittest.TestCase):
 
 
 class TestHandStrain(unittest.TestCase):
+    def test_null_strain(self):
+        h = Hand(all_open)
+        self.assertEqual(h.strain, 0)
+
+    def test_single_notes(self):
+        for string, fret in it.product(range(5), range(19)):
+            with self.subTest(i=(string, fret)):
+                h = Hand([(string, fret)])
+                self.assertEqual(h.strain, max(0, fret-12))
+
     def test_open_c_strain(self):
         h = Hand(open_c)
         self.assertEqual(h.strain, 1)
@@ -239,6 +263,7 @@ class TestHandStrain(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    all_open = [(0,0), (1,0), (2,0), (3,0), (4,0), (5,0)]
     open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
     open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
     open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
