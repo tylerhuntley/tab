@@ -233,15 +233,9 @@ class TestArrangements(unittest.TestCase):
             frets, duration = note
             arr.add_shape(notes.Shape(frets), duration)
 #        tabs = arr.transcribe()
-        try: self.assertEqual(arr,
-'|----------------|--------------------------------|\n'
-'|----------------|--------------------------------|\n'
-'|----------------|--------------------------------|\n'
-'|2---5---7-----2-|----5-------9---7---------------|\n'
-'|2---5---7-----2-|----5-------9---7---------------|\n'
-'|0---3---5-----0-|----3-------7---5---------------|\n\n')
+        try: self.assertEqual(arr, smoke_on_the_water)
         except AssertionError as e:
-            print(f'Smoke on the Water, two bars:\n{arr}')
+            print(f'Smoke on the Water, two bars, manual:\n{arr}')
             raise e
 
 #    @unittest.expectedFailure  # TODO deal with 3/4 time incomplete bars
@@ -256,15 +250,9 @@ class TestArrangements(unittest.TestCase):
             frets, duration = note
             arr.add_shape(notes.Shape(frets), duration)
 #        tabs = arr.transcribe()
-        try: self.assertEqual(arr,
-'|------------------------|--------------------------------|\n'
-'|0-------1-------3-------|12----------12------12----------|\n'
-'|----0-------0-------0---|--------0---------------0-------|\n'
-'|------------------------|--------------------------------|\n'
-'|--------0-------2-------|10--------------10--------------|\n'
-'|3-----------------------|--------------------------------|\n\n')
+        try: self.assertEqual(arr, blackbird)
         except AssertionError as e:
-            print(f'Blackbird, two bars:\n{arr}')
+            print(f'Blackbird, two bars, manual:\n{arr}')
             raise e
 
 
@@ -294,7 +282,7 @@ class TestGuitarist(unittest.TestCase):
     def test_E_major(self):
         song = tab.Song()
         for note in ('E3', 'F#3', 'G#3', 'A3', 'B3', 'C#4', 'D#4', 'E4'):
-            song.add(notes.Note(note, t='E'))
+            song.add(notes.Note(note, 1/8))
         g = tab.Guitarist(song)
         expected = ('|--------------------------------|\n'
             '|--------------------------------|\n'
@@ -307,7 +295,50 @@ class TestGuitarist(unittest.TestCase):
             print(f'E major, one bar:\n{g.arr}')
             raise AE
 
+    @unittest.expectedFailure
+    def test_chords(self):
+        song = tab.Song()
+        sotw_chords = [(['E3', 'B3', 'E4'], 1/4), (['G3', 'D4', 'G4'], 1/4),
+                      (['A3', 'E4', 'A4'], 3/8), (['E3', 'B3', 'E4'], 1/4),
+                      (['G3', 'D4', 'G4'], 1/4), (['B3', 'F#4', 'B4'], 1/8),
+                      (['A3', 'E4', 'A4'], 1/2)]
+        for chord in sotw_chords:
+            song.add(notes.Chord(*chord))
+        g = tab.Guitarist(song)
+        try: self.assertEqual(g.arr, smoke_on_the_water)
+        except AssertionError as AE:
+            print(f'Smoke on the Water, two bars, auto:\n{g.arr}')
+            raise AE
+
+#    def test_mixed_notes(self):
+#        song = tab.Song()
+#        bb_chords = [(['G3', 'B4'], 1/6), (['G4'], 1/6), (['A3', 'C5'], 1/6),
+#                     (['G4'], 1/6), (['B3', 'D5'], 1/6), (['G4'], 1/6),
+#                     (['G4', 'B5'], 1/4), (['G4'], 1/8), (['B5'], 1/8),
+#                     (['G4'], 1/8), (['B5'], 1/8), (['G4'], 1/4)]
+#        for chord in bb_chords:
+#            song.add(notes.Chord(*chord))
+#        g = tab.Guitarist(song)
+#        try: self.assertEqual(g.arr, blackbird)
+#        except AssertionError as AE:
+#            print(f'Blackbird, two bars, auto:\n{g.arr}')
+#            raise AE
+
 
 if __name__ == '__main__':
+    smoke_on_the_water = (
+'|----------------|--------------------------------|\n'
+'|----------------|--------------------------------|\n'
+'|----------------|--------------------------------|\n'
+'|2---5---7-----2-|----5-------9---7---------------|\n'
+'|2---5---7-----2-|----5-------9---7---------------|\n'
+'|0---3---5-----0-|----3-------7---5---------------|\n\n')
+    blackbird = (
+'|------------------------|--------------------------------|\n'
+'|0-------1-------3-------|12----------12------12----------|\n'
+'|----0-------0-------0---|--------0---------------0-------|\n'
+'|------------------------|--------------------------------|\n'
+'|--------0-------2-------|10--------------10--------------|\n'
+'|3-----------------------|--------------------------------|\n\n')
 #    print()
     unittest.main()
