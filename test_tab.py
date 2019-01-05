@@ -268,6 +268,46 @@ class TestArrangements(unittest.TestCase):
             raise e
 
 
+class TestGuitarist(unittest.TestCase):
+    def test_null_song(self):
+        song = tab.Song()
+        g = tab.Guitarist(song)
+        self.assertEqual(g.arr, str(tab.Bar())+'\n')
+
+    def test_song_add(self):
+        songs = [tab.Song() for i in range(3)]
+        songs[0].add(notes.Note('E3'))
+        songs[1].add(notes.Chord(['E3']))
+        songs[2].add('E3')
+        for song in songs:
+            self.assertIn('E3', str(song.notes))  # This is sloppy
+
+    def test_low_E(self):
+        song = tab.Song()
+        song.add('E3')
+        g = tab.Guitarist(song)
+        expected = tab.Bar(notes=[(notes.Shape((0,0)), 1/4)])
+        self.assertEqual(g.arr, str(expected)+'\n')
+
+    @unittest.expectedFailure
+    # TODO select fingers to reduce strain, don't always rely on index
+    def test_E_major(self):
+        song = tab.Song()
+        for note in ('E3', 'F#3', 'G#3', 'A3', 'B3', 'C#4', 'D#4', 'E4'):
+            song.add(notes.Note(note, t='E'))
+        g = tab.Guitarist(song)
+        expected = ('|--------------------------------|\n'
+            '|--------------------------------|\n'
+            '|--------------------------------|\n'
+            '|------------------------1---2---|\n'
+            '|------------0---2---4-----------|\n'
+            '|0---2---4-----------------------|\n\n')
+        try: self.assertEqual(g.arr, expected)
+        except AssertionError as AE:
+            print(f'E major, one bar:\n{g.arr}')
+            raise AE
+
+
 if __name__ == '__main__':
 #    print()
     unittest.main()

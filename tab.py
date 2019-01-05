@@ -1,4 +1,5 @@
-from notes import Note, Chord, Shape
+from notes import Note, Chord, Hand, Shape
+import itertools as it
 
 '''
 64 chars/bar:
@@ -116,12 +117,15 @@ class Arrangement():
     ''' An Arrangement is similar to a Song, but consists of specific
     fingering patterns, with durations, for transcription to tablature
     by managing staff concatenation and line length/page display'''
-    def __init__(self, width=MIN_WIDTH):
+    def __init__(self, notes=None, width=MIN_WIDTH):
         self.width = width
         self.last_bar = Bar(width=self.width)
         self.bars = [self.last_bar]
         self.staffs = [Staff(self.last_bar)]
         self.notes = []
+        if notes is not None:
+            for note in notes:
+                self.add_shape(*note)
 
     def __repr__(self):
         return '\n'.join(str(staff) for staff in self.staffs)+'\n'
@@ -159,13 +163,15 @@ class Song():
     ''' A Song is an ordered list of Note/Chord objects with their
     respective durations, played in order to produce music '''
     def __init__(self):
-        self.notes= []
+        self.notes = []
 
     def add(self, obj):
-        if isinstance(obj, (Note, Chord)):
+        if isinstance(obj, Note):
+            self.notes.append(Chord([obj]))
+        elif isinstance(obj, Chord):
             self.notes.append(obj)
         else:
-            try: self.notes.append(Note(obj))
+            try: self.notes.append(Chord([Note(obj)]))
             except (TypeError, AttributeError): pass
 
 
@@ -174,14 +180,43 @@ class Guitarist():
     an Arrangement by guiding a Hand along the easiest route through
     the possible shapes of the musical objects it contains. '''
     def __init__(self, song=None):
+        self.arr = Arrangement()
         if song:
-            self.play(song)
+            self.song = song
+            self.path = self.play(song)
+            try:
+                durations = (n.duration for n in self.song.notes)
+                temp = [(a,b) for a,b in zip(self.path, durations)]
+            except TypeError:
+                temp = None
+            self.arr = Arrangement(notes=temp)
+
+    def read(self, song):
+        return [note.shapes for note in song.notes]
 
     def play(self, song):
         ''' This is a shortest path algorithm, using possible shapes as
         path nodes, and a combination of Hand.strain and Hand.move
-        difficulty as its path lengths. Particular algorithm TBD. '''
-        pass
+        difficulty as its path lengths. '''
+        if len(song.notes) == 1:
+            return [song.notes[0].shape]
+        best_score = None
+        best_path = None
+        paths = [note.shapes for note in song.notes]
+        for path in it.product(*paths):
+            score = 0
+            h = Hand()
+            for shape in path:
+                score += h.move(shape)
+                score += h.strain
+            try:
+                if score < best_score:
+                    best_score = score
+                    best_path = path
+            except TypeError:
+                best_score = score
+                best_path = path
+        return best_path
 
 
 if __name__ == '__main__':
