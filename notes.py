@@ -11,8 +11,10 @@ VALUE, NAME = {}, {}
 for l, v in zip(LETTERS, VALUES):
     VALUE[l] = v
     NAME[v] = l
-
 ACCIDENTAL = {'b': -1, '#': 1}
+
+MAX_FRET = 18
+MAX_SPAN = 5
 
 
 class Pitch():
@@ -99,7 +101,8 @@ class Pitch():
         for string, value in enumerate(tuning):
             if self.value >= LOW_E + value:
                 fret = self.value - LOW_E - value
-                shapes.append(Shape((string, fret)))
+                if fret <= MAX_FRET:  # Don't pass the end of the fretboard
+                    shapes.append(Shape((string, fret)))
         return shapes
 
 
@@ -160,6 +163,13 @@ class Shape():
                 temp.append(max(a, b))
         return Shape(temp)
 
+    @property
+    def span(self):
+        ''' Returns integer distance between highest/lowest played frets'''
+        temp = [i[1] for i in self.list_tuples() if i[1] > 0]
+        try: return max(temp) - min(temp)
+        except ValueError: return 0
+
     def list_frets(self):
         return self.shape
 
@@ -191,8 +201,8 @@ class Chord():
             shape = Shape()
             for i in shapes:
                 shape += i
-            # Only allow shapes that hit every note
-            if len(shape) == len(self.notes):
+            # Shape must hit every note, and not stretch too far
+            if len(shape) == len(self.notes) and shape.span <= MAX_SPAN:
                 self.shapes.append(shape)
 
     def __repr__(self):

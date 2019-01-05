@@ -20,6 +20,12 @@ class TestNotes(unittest.TestCase):
         self.assertEqual(self.e1.shapes, [(0, 0)])
         self.assertEqual(self.e2.shapes, [(0, 0)])
 
+    def test_fret_limit(self):
+        a6 = Note('A6')
+        self.assertEqual(a6.shapes, [(5,17)])
+        e6 = Note('E6')
+        self.assertEqual(e6.shapes, [(4,17), (5,12)])
+
 
 class TestChordShapes(unittest.TestCase):
     def setUp(self):
@@ -61,6 +67,13 @@ class TestChordShapes(unittest.TestCase):
             (C7_shape, Bdim_shape, Dmaj7_shape, E7_shape, cVII_A_shape, cVII_G_shape)):
             with self.subTest(i=chord):
                 self.assertEqual(chord.shape, shape)
+
+    def test_span_limit(self):
+        one = Chord(['F3', 'A#5'])
+        self.assertEqual(one.shapes, [[1, None, None, None, None, 6]])
+        two = Chord(['F3', 'F5'])
+        self.assertEqual(two.shapes, [[1, None, None, None, 6, None],
+                                      [1, None, None, None, None, 1]])
 
 
 class TestFingers(unittest.TestCase):
