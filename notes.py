@@ -124,6 +124,8 @@ class Shape():
         '''Converts and stores shape as a fret-list by default'''
         self.shape = [None] * 6
         if shape is None: return
+        elif isinstance(shape, Shape):
+            self.shape = shape.shape
         elif all((type(i) is int or i is None for i in shape)):
             # Fret-list, e.g. open D: [None, 0, 0, 2, 3, 2]
             if len(shape) == 6:
@@ -246,7 +248,7 @@ class Hand():
                 # Don't add string being played by other fingers
                 if string not in [pos[0] for pos in shape]:
                     shape.append((string, self.index))
-        return sorted(shape)
+        return Shape(shape)
 
     @property
     def strain(self):
@@ -264,8 +266,9 @@ class Hand():
                 strain += max((abs(b.string - a.string) - 1), 0)
             except TypeError: continue
         # Barre strain
+        tuples = self.shape.list_tuples()
         if self.barre:
-            strain += len([n for n in self.shape if n[1] == self.index]) - 1
+            strain += len([n for n in tuples if n[1] == self.index]) - 1
         # High note strain
         for f in self.fingers:
             if f.down and f.fret > 12:

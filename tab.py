@@ -1,4 +1,4 @@
-from notes import Note, Chord
+from notes import Note, Chord, Shape
 
 '''
 64 chars/bar:
@@ -35,7 +35,8 @@ class Bar():
         width = max(self.width, temp)
         lines = ['|']*6
         total = 0
-        for chord, duration in self.notes:
+        for shape, duration in self.notes:
+            chord = shape.list_frets()
             # Ignore notes beyond one full bar
             if total >= 1:
                 break
@@ -73,11 +74,14 @@ class Bar():
     def time_left(self):
         return 1 - sum(t for _, t in self.notes)
 
-    def add_frets(self, frets, duration):
-        '''Frets must be a list of either integer fret values or None
-        e.g. open D would be [None, 0, 0, 2, 3, 2]
+    def add_shape(self, shape, duration):
+        ''' shape should be a Shape object
+        It may be a fret-list e.g. open D would be [None, 0, 0, 2, 3, 2]
         Duration is a float, where 1.0 is a whole note, 0.25 a quarter, etc.'''
-        self.notes.append((frets, duration))
+        if isinstance(shape, Shape):
+            self.notes.append((shape, duration))
+        else:
+            self.notes.append((Shape(shape), duration))
 
 
 class Staff():
@@ -131,31 +135,24 @@ class Arrangement():
             self.staffs.append(Staff())
         self.staffs[-1].add_bar(bar)
 
-    def add_frets(self, frets, duration):
-        ''' frets is a list of tuples: (string, fret), duration is a float'''
+    def add_shape(self, shape, duration):
+        ''' shape is a Shape object, duration is a float, e.g. 1, 0.25, 1/8'''
         # Start a new bar if last one is already full
         if self.last_bar.is_full():
             self.last_bar = Bar(width=self.width)
             self.add_bar(self.last_bar)
-        # Convert (string, fret) tuples to a list of fret values for Bar()
-        temp = [None] * 6
-        for string, fret in frets:
-            temp[string] = fret
         diff = duration - self.last_bar.time_left()
-        self.last_bar.add_frets(temp, duration)
+        self.last_bar.add_shape(shape, duration)
         # Add remaining duration to a new bar if note is too long
         if diff > 0:
             self.last_bar = Bar(width=self.width)
-            self.last_bar.add_frets([None]*6, diff)
+            self.last_bar.add_shape(Shape(), diff)
             self.add_bar(self.last_bar)
-        self.notes.append((frets, duration))
+        self.notes.append((shape, duration))
 
-    def add_fret(self, fret, duration):
-        self.add_frets([fret], duration)
-
-    def add_run(self, frets, duration):
-        for fret in frets:
-            self.add_fret(fret, duration)
+    def add_run(self, shapes, duration):
+        for shape in shapes:
+            self.add_shape(shape, duration)
 
 
 class Song():
