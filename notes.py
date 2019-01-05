@@ -105,17 +105,10 @@ class Pitch():
 
 class Note(Pitch):
     ''' A Note is a Pitch plus an appropriate time duration value '''
-    durations = {'W': 1, 'H': 1/2, 'Q': 1/4, 'E': 1/8, 'S': 1/16, 'T': 1/32}
-    def __init__(self, *args, t='Q', **kwargs):
-        super().__init__(*args, **kwargs)
-        self.duration = self.durations[t]  # Default to quarter notes
-
-    def set_duration(self, t):
-        try:
-            self.duration = self.durations[t]
-        except IndexError:
-            print("Invalid duration: {W|H|Q|E|S|T}. Default to quarter note ('Q')")
-            self.duration = 1/4
+    def __init__(self, pitch, duration=1/4):
+        ''' Accepts one Pitch value parameter, and one optional duration '''
+        super().__init__(pitch)
+        self.duration = duration  # Default to quarter notes
 
 
 class Shape():
@@ -177,7 +170,9 @@ class Shape():
 class Chord():
     ''' A Chord is a set of concurrent Notes. Its duration is equal to that
     of its shortest note, since tab sacrifices timing info for readability '''
-    def __init__(self, note_list):
+    def __init__(self, note_list, duration=1/4):
+        ''' note_list is a list of Note objects or Note constructor arguments,
+        with duration applied to each constructed Note'''
         self.notes = []
         self.shapes = []
 
@@ -186,7 +181,7 @@ class Chord():
             if isinstance(note, Note):
                 self.notes.append(note)
             else:
-                self.notes.append(Note(note))
+                self.notes.append(Note(note, duration))
 
         # Store shortest note duration as own
         self.duration = min(note.duration for note in self.notes)
