@@ -162,8 +162,14 @@ class Arrangement():
 class Song():
     ''' A Song is an ordered list of Note/Chord objects with their
     respective durations, played in order to produce music '''
-    def __init__(self):
+    def __init__(self, notes=None):
         self.notes = []
+        if notes is not None:
+            for note in notes:
+                self.add(note)
+
+    def __len__(self):
+        return len(self.notes)
 
     def add(self, obj):
         if isinstance(obj, Note):
@@ -183,7 +189,7 @@ class Guitarist():
         self.arr = Arrangement()
         if song:
             self.song = song
-            self.path = self.play(song)
+            self.path = self.read(song)
             try:
                 durations = (n.duration for n in self.song.notes)
                 temp = [(a,b) for a,b in zip(self.path, durations)]
@@ -191,8 +197,23 @@ class Guitarist():
                 temp = None
             self.arr = Arrangement(notes=temp)
 
-    def read(self, song):
-        return [note.shapes for note in song.notes]
+    def read(self, song, DELTA=3):
+        ''' This gradually pieces a song together via play(),
+        to mitigate exponential complexity.'''
+        path = []
+        # Play first three notes, and select best starting shape
+        passage = Song(song.notes[:DELTA])
+        shape = self.play(passage)
+        path.append(shape[0])
+        # Repeat in three-note sections, building off previous results
+        for i in range(1, len(song)-DELTA):
+            passage = Song([path[-1], *song.notes[i:i+DELTA+1]])
+            shape = self.play(passage)
+            path.append(shape[0])
+        # Add final notes
+        for i in shape[1:]:
+            path.append(i)
+        return path
 
     def play(self, song):
         ''' This is a shortest path algorithm, using possible shapes as

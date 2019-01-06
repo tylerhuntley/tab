@@ -310,19 +310,20 @@ class TestGuitarist(unittest.TestCase):
             print(f'Smoke on the Water, two bars, auto:\n{g.arr}')
             raise AE
 
-#    def test_mixed_notes(self):
-#        song = tab.Song()
-#        bb_chords = [(['G3', 'B4'], 1/6), (['G4'], 1/6), (['A3', 'C5'], 1/6),
-#                     (['G4'], 1/6), (['B3', 'D5'], 1/6), (['G4'], 1/6),
-#                     (['G4', 'B5'], 1/4), (['G4'], 1/8), (['B5'], 1/8),
-#                     (['G4'], 1/8), (['B5'], 1/8), (['G4'], 1/4)]
-#        for chord in bb_chords:
-#            song.add(notes.Chord(*chord))
-#        g = tab.Guitarist(song)
-#        try: self.assertEqual(g.arr, blackbird)
-#        except AssertionError as AE:
-#            print(f'Blackbird, two bars, auto:\n{g.arr}')
-#            raise AE
+    @unittest.expectedFailure
+    def test_mixed_notes(self):
+        song = tab.Song()
+        bb_chords = [(['G3', 'B4'], 1/6), (['G4'], 1/6), (['A3', 'C5'], 1/6),
+                     (['G4'], 1/6), (['B3', 'D5'], 1/6), (['G4'], 1/6),
+                     (['G4', 'B5'], 1/4), (['G4'], 1/8), (['B5'], 1/8),
+                     (['G4'], 1/8), (['B5'], 1/8), (['G4'], 1/4)]
+        for chord in bb_chords:
+            song.add(notes.Chord(*chord))
+        g = tab.Guitarist(song)
+        try: self.assertEqual(g.arr, blackbird)
+        except AssertionError as AE:
+            print(f'Blackbird, two bars, auto:\n{g.arr}')
+            raise AE
 
 
 if __name__ == '__main__':
