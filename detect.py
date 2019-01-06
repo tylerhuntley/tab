@@ -1,3 +1,8 @@
+'''
+This file concerns the isolation of abstract musical information from the
+standard nomenclature of printed sheet music.
+'''
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,6 +12,7 @@ import pickle
 import os
 
 CWD = os.getcwd()
+
 
 class Detector():
     image_path = 'static/'

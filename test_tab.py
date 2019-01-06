@@ -1,6 +1,5 @@
-import unittest
-import tab
-import notes
+import unittest, tab, music
+import itertools as it
 
 
 class TestBlankStaticBars(unittest.TestCase):
@@ -47,7 +46,7 @@ class TestDynamicBars(unittest.TestCase):
     # The following use improper notes arguments, for testing, for now.
     def test_whole_note(self):
         bar = tab.Bar()
-        bar.add_shape(notes.Shape((0, 0)), 1)
+        bar.add_shape(tab.Shape((0, 0)), 1)
         try: self.assertEqual(len(bar), 8+2)
         except AssertionError as e:
             print(f'Dynamic whole notes:\n{bar}')
@@ -56,7 +55,7 @@ class TestDynamicBars(unittest.TestCase):
     def test_half_note(self):
         bar = tab.Bar()
         for i in range(2):
-            bar.add_shape(notes.Shape((0, 0)), 1/2)
+            bar.add_shape(tab.Shape((0, 0)), 1/2)
         try: self.assertEqual(len(bar), 8+2)
         except AssertionError as e:
             print(f'Dynamic half notes:\n{bar}')
@@ -65,7 +64,7 @@ class TestDynamicBars(unittest.TestCase):
     def test_quarter_note(self):
         bar = tab.Bar()
         for i in range(4):
-            bar.add_shape(notes.Shape((0, 0)), 1/4)
+            bar.add_shape(tab.Shape((0, 0)), 1/4)
         try: self.assertEqual(len(bar), 16+2)
         except AssertionError as e:
             print(f'Dynamic quarter notes:\n{bar}')
@@ -74,7 +73,7 @@ class TestDynamicBars(unittest.TestCase):
     def test_eighth_note(self):
         bar = tab.Bar()
         for i in range(8):
-            bar.add_shape(notes.Shape((0, 0)), 1/8)
+            bar.add_shape(tab.Shape((0, 0)), 1/8)
         try: self.assertEqual(len(bar), 32+2)
         except AssertionError as e:
             print(f'Dynamic eighth notes:\n{bar}')
@@ -83,7 +82,7 @@ class TestDynamicBars(unittest.TestCase):
     def test_sixteenth_note(self):
         bar = tab.Bar()
         for i in range(16):
-            bar.add_shape(notes.Shape((0, 0)), 1/16)
+            bar.add_shape(tab.Shape((0, 0)), 1/16)
         try: self.assertEqual(len(bar), 64+2)
         except AssertionError as e:
             print(f'Dynamic sixteenth notes:\n{bar}')
@@ -95,25 +94,25 @@ class TestStaticBars(unittest.TestCase):
     def test_length_limit(self):
         ''' Ensure notes added beyond 1 bars-length are ignored'''
         bar_0 = tab.Bar(width=32)
-        bar_0.add_shape(notes.Shape((0, 0)), 1)
+        bar_0.add_shape(tab.Shape((0, 0)), 1)
         for line in bar_0.lines:
             self.assertEqual(len(line), 34)
 
         bar_1 = tab.Bar(width=32)
-        bar_1.add_shape(notes.Shape((0, 0)), 1)
-        bar_1.add_shape(notes.Shape((0, 0)), 1)
+        bar_1.add_shape(tab.Shape((0, 0)), 1)
+        bar_1.add_shape(tab.Shape((0, 0)), 1)
         for line in bar_1.lines:
             self.assertEqual(len(line), 34)
 
         bar_4 = tab.Bar(width=32)
         for i in range(5):
-            bar_4.add_shape(notes.Shape((0, 0)), 1/4)
+            bar_4.add_shape(tab.Shape((0, 0)), 1/4)
         for line in bar_4.lines:
             self.assertEqual(len(line), 34)
 
         bar_16 = tab.Bar(width=32)
         for i in range(17):
-            bar_16.add_shape(notes.Shape((0, 0)), 1/16)
+            bar_16.add_shape(tab.Shape((0, 0)), 1/16)
         for line in bar_16.lines:
             self.assertEqual(len(line), 66)
 
@@ -122,7 +121,7 @@ class TestStaticBars(unittest.TestCase):
         ''' Add eighth Notes manually, one by one '''
         bar = tab.Bar()
         for note in ((0,0), (0,2), (0,4), (1,0), (1,2), (1,4), (2,1), (2,2)):
-            bar.add_shape(notes.Shape(note), 1/8)
+            bar.add_shape(tab.Shape(note), 1/8)
         try: self.assertEqual(bar, '|--------------------------------|\n'
                                 '|--------------------------------|\n'
                                 '|--------------------------------|\n'
@@ -135,7 +134,7 @@ class TestStaticBars(unittest.TestCase):
 
     def test_A_major_scale(self):
         ''' Test add_run using Note addition '''
-        root = notes.Note('A3')
+        root = music.Note('A3')
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         bar = tab.Bar()
         for i in major:
@@ -156,7 +155,7 @@ class TestStaticBars(unittest.TestCase):
         D_major = ('D4', 'E4', 'F#4', 'G4', 'A4', 'B4', 'C#5', 'D5')
         bar = tab.Bar()
         for note in D_major:
-            shape = notes.Note(note).get_low_fret()
+            shape = music.Note(note).get_low_fret()
             bar.add_shape(shape, 1/8)
         try: self.assertEqual(bar,'|--------------------------------|\n'
                                '|--------------------0---2---3---|\n'
@@ -177,7 +176,7 @@ class TestArrangements(unittest.TestCase):
 
     def test_two_bars(self):
         arr = tab.Arrangement()
-        root = notes.Note('A3')
+        root = music.Note('A3')
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         arr.add_run([(root + i).get_low_fret() for i in major], 1/4)
         try: self.assertEqual(arr,
@@ -193,7 +192,7 @@ class TestArrangements(unittest.TestCase):
 
     def test_four_bars(self):
         arr = tab.Arrangement()
-        root = notes.Note('A3')
+        root = music.Note('A3')
         major = (0, 2, 4, 5, 7, 9, 11, 12)
         arr.add_run([(root + i).get_low_fret() for i in major], 1/2)
         try: self.assertEqual(arr,
@@ -210,7 +209,7 @@ class TestArrangements(unittest.TestCase):
     def test_single_notes(self):
         arr = tab.Arrangement()
         for note in [(0,0), (0,2), (0,4), (1,0), (1,2), (1,4), (2,1), (2,2)]:
-            arr.add_shape(notes.Shape(note), 1/8)
+            arr.add_shape(tab.Shape(note), 1/8)
 #        tabs = arr.transcribe()
         expected = ('|--------------------------------|\n'
                     '|--------------------------------|\n'
@@ -231,7 +230,7 @@ class TestArrangements(unittest.TestCase):
                 ([(0,5), (1,7), (2,7)], 1/2) ]
         for note in sotw:
             frets, duration = note
-            arr.add_shape(notes.Shape(frets), duration)
+            arr.add_shape(tab.Shape(frets), duration)
 #        tabs = arr.transcribe()
         try: self.assertEqual(arr, smoke_on_the_water)
         except AssertionError as e:
@@ -248,7 +247,7 @@ class TestArrangements(unittest.TestCase):
               ([(1,10)], 1/8), ([(4,12)], 1/8), ([(3,0)], 1/4) ]
         for note in bb1 + bb2:
             frets, duration = note
-            arr.add_shape(notes.Shape(frets), duration)
+            arr.add_shape(tab.Shape(frets), duration)
 #        tabs = arr.transcribe()
         try: self.assertEqual(arr, blackbird)
         except AssertionError as e:
@@ -256,77 +255,78 @@ class TestArrangements(unittest.TestCase):
             raise e
 
 
-class TestGuitarist(unittest.TestCase):
-    def test_null_song(self):
-        song = tab.Song()
-        g = tab.Guitarist(song)
-        self.assertEqual(g.arr, str(tab.Bar())+'\n')
+class TestShapeInit(unittest.TestCase):
+    def test_null_shape(self):
+        s = tab.Shape()
+        self.assertEqual(s.list_frets(), [None]*6)
+        self.assertEqual(s.list_tuples(), [])
 
-    def test_song_add(self):
-        songs = [tab.Song() for i in range(3)]
-        songs[0].add(notes.Note('E3'))
-        songs[1].add(notes.Chord(['E3']))
-        songs[2].add('E3')
-        for song in songs:
-            self.assertIn('E3', str(song.notes))  # This is sloppy
+    def test_single_notes(self):
+        for string, fret in it.product(range(5), range(19)):
+            with self.subTest(i=(string, fret)):
+                s = tab.Shape([(string, fret)])
+                self.assertEqual(s.list_tuples(), [(string, fret)])
+                temp = [fret if string == i else None for i in range(6)]
+                self.assertEqual(s.list_frets(), temp)
 
-    def test_low_E(self):
-        song = tab.Song()
-        song.add('E3')
-        g = tab.Guitarist(song)
-        expected = tab.Bar(notes=[(notes.Shape((0,0)), 1/4)])
-        self.assertEqual(g.arr, str(expected)+'\n')
+    def test_open_c_shape(self):
+        lst = [0, 3, 2, 0, 1, 0]
+        self.assertEqual(tab.Shape(open_c).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), open_c)
 
-    @unittest.expectedFailure
-    # TODO select fingers to reduce strain, don't always rely on index
-    def test_E_major(self):
-        song = tab.Song()
-        for note in ('E3', 'F#3', 'G#3', 'A3', 'B3', 'C#4', 'D#4', 'E4'):
-            song.add(notes.Note(note, 1/8))
-        g = tab.Guitarist(song)
-        expected = ('|--------------------------------|\n'
-            '|--------------------------------|\n'
-            '|--------------------------------|\n'
-            '|------------------------1---2---|\n'
-            '|------------0---2---4-----------|\n'
-            '|0---2---4-----------------------|\n\n')
-        try: self.assertEqual(g.arr, expected)
-        except AssertionError as AE:
-            print(f'E major, one bar:\n{g.arr}')
-            raise AE
+    def test_open_a_shape(self):
+        lst = [0, 0, 2, 2, 2, 0]
+        self.assertEqual(tab.Shape(open_a).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), open_a)
 
-    @unittest.expectedFailure
-    def test_chords(self):
-        song = tab.Song()
-        sotw_chords = [(['E3', 'B3', 'E4'], 1/4), (['G3', 'D4', 'G4'], 1/4),
-                      (['A3', 'E4', 'A4'], 3/8), (['E3', 'B3', 'E4'], 1/4),
-                      (['G3', 'D4', 'G4'], 1/4), (['B3', 'F#4', 'B4'], 1/8),
-                      (['A3', 'E4', 'A4'], 1/2)]
-        for chord in sotw_chords:
-            song.add(notes.Chord(*chord))
-        g = tab.Guitarist(song)
-        try: self.assertEqual(g.arr, smoke_on_the_water)
-        except AssertionError as AE:
-            print(f'Smoke on the Water, two bars, auto:\n{g.arr}')
-            raise AE
+    def test_open_g_shape(self):
+        lst = [3, 2, 0, 0, 0, 3]
+        self.assertEqual(tab.Shape(open_g).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), open_g)
 
-    @unittest.expectedFailure
-    def test_mixed_notes(self):
-        song = tab.Song()
-        bb_chords = [(['G3', 'B4'], 1/6), (['G4'], 1/6), (['A3', 'C5'], 1/6),
-                     (['G4'], 1/6), (['B3', 'D5'], 1/6), (['G4'], 1/6),
-                     (['G4', 'B5'], 1/4), (['G4'], 1/8), (['B5'], 1/8),
-                     (['G4'], 1/8), (['B5'], 1/8), (['G4'], 1/4)]
-        for chord in bb_chords:
-            song.add(notes.Chord(*chord))
-        g = tab.Guitarist(song)
-        try: self.assertEqual(g.arr, blackbird)
-        except AssertionError as AE:
-            print(f'Blackbird, two bars, auto:\n{g.arr}')
-            raise AE
+    def test_open_e_shape(self):
+        lst = [0, 2, 2, 1, 0, 0]
+        self.assertEqual(tab.Shape(open_e).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), open_e)
+
+    def test_open_d_shape(self):
+        lst = [None, 0, 0, 2, 3, 2]
+        self.assertEqual(tab.Shape(open_d).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), open_d)
+
+    def test_barre_b_shape(self):
+        lst = [2, 2, 4, 4, 4, 2]
+        self.assertEqual(tab.Shape(barre_b).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), barre_b)
+
+    def test_barre_f_shape(self):
+        lst = [1, 3, 3, 2, 1, 1]
+        self.assertEqual(tab.Shape(barre_f).list_frets(), lst)
+        self.assertEqual(tab.Shape(lst).list_tuples(), barre_f)
+
+
+class TestShapeAddition(unittest.TestCase):
+    def test_null_shape(self):
+        self.assertEqual(tab.Shape() + tab.Shape(), tab.Shape())
+
+    def test_all_open(self):
+        s = tab.Shape()
+        for i in range(6):
+            s += tab.Shape((i, 0))
+        self.assertEqual(s, tab.Shape([0, 0, 0, 0, 0, 0]))
 
 
 if __name__ == '__main__':
+    all_open = [(0,0), (1,0), (2,0), (3,0), (4,0), (5,0)]
+    open_c = [(0,0), (1,3), (2,2), (3,0), (4,1), (5,0)]
+    open_a = [(0,0), (1,0), (2,2), (3,2), (4,2), (5,0)]
+    open_g = [(0,3), (1,2), (2,0), (3,0), (4,0), (5,3)]
+    open_e = [(0,0), (1,2), (2,2), (3,1), (4,0), (5,0)]
+    open_d = [(1,0), (2,0), (3,2), (4,3), (5,2)]
+    barre_b = [(0,2), (1,2), (2,4), (3,4), (4,4), (5,2)]
+    barre_f = [(0,1), (1,3), (2,3), (3,2), (4,1), (5,1)]
+    barre_a = [(0,5), (1,7), (2,7), (3,6), (4,5), (5,5)]
+
     smoke_on_the_water = (
 '|----------------|--------------------------------|\n'
 '|----------------|--------------------------------|\n'
@@ -341,5 +341,5 @@ if __name__ == '__main__':
 '|------------------------|--------------------------------|\n'
 '|--------0-------2-------|10--------------10--------------|\n'
 '|3-----------------------|--------------------------------|\n\n')
-#    print()
+
     unittest.main()

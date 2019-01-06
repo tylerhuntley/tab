@@ -1,7 +1,7 @@
-from notes import Note, Chord, Hand, Shape
-import itertools as it
-
 '''
+This file concerns transcription of particular arrangements of musical notes
+into the tablature format commonly used in the guitar community.
+
 64 chars/bar:
 |----------------------------------------------------------------|
 32 chars/bar:
@@ -12,7 +12,6 @@ import itertools as it
 |--------|--------|--------|--------|--------|--------|--------|--------|
 '''
 
-CHARS_PER_BAR = 32  # Probably want this to be dynamic
 MIN_WIDTH = 8  # Minimum size for sparse or empty bars
 MAX_WIDTH = 67  # 64 chars (2 * 32 chars/bar) + 3 barlines
 
@@ -69,10 +68,11 @@ class Bar():
         self.notes = []
 
     def is_full(self):
-        ''' Bar is full one it has at least 1 bar's worth of note duration '''
+        ''' Bar is full once it has at least 1 bar's worth of note duration '''
         return round(sum(t for _, t in self.notes), 3) >= 1
 
     def time_left(self):
+        ''' A float fraction of whole notes to add until the bar is full'''
         return 1 - sum(t for _, t in self.notes)
 
     def add_shape(self, shape, duration):
@@ -159,86 +159,71 @@ class Arrangement():
             self.add_shape(shape, duration)
 
 
-class Song():
-    ''' A Song is an ordered list of Note/Chord objects with their
-    respective durations, played in order to produce music '''
-    def __init__(self, notes=None):
-        self.notes = []
-        if notes is not None:
-            for note in notes:
-                self.add(note)
+class Shape():
+    ''' Intended to simplify communication of fretboard coordinates'''
+    def __init__(self, shape=None):
+        '''Converts and stores shape as a fret-list by default'''
+        self.shape = [None] * 6
+        if shape is None: return
+        elif isinstance(shape, Shape):
+            self.shape = shape.shape
+        elif all((type(i) is int or i is None for i in shape)):
+            # Fret-list, e.g. open D: [None, 0, 0, 2, 3, 2]
+            if len(shape) == 6:
+                self.shape = list(shape)
+            # Single tuple: (string, fret)
+            elif len(shape) == 2 and not any((i is None for i in shape)):
+                self.shape = [None]*6
+                self.shape[shape[0]] = shape[1]
+        # List of tuples: [(string, fret), ...]
+        elif type(shape) is list and all((type(i) is tuple for i in shape)):
+            self.shape = [None]*6
+            for string, fret in shape:
+                self.shape[string] = fret
+
+    def __repr__(self):
+        return str(self.shape)
+
+    def __eq__(self, other):
+        try:
+            return self.shape == other.shape
+        except AttributeError:
+            return self.shape == Shape(other).shape
+        return False
 
     def __len__(self):
-        return len(self.notes)
+        return len([i for i in self.shape if i is not None])
 
-    def add(self, obj):
-        if isinstance(obj, Note):
-            self.notes.append(Chord([obj]))
-        elif isinstance(obj, Chord):
-            self.notes.append(obj)
-        else:
-            try: self.notes.append(Chord([Note(obj)]))
-            except (TypeError, AttributeError): pass
+    def __add__(self, other):
+        ''' Combine two shapes, using the higher value for each string '''
+        temp = []
+        for a, b in zip(self.shape, other.shape):
+            if a is None and b is None:
+                temp.append(None)
+            elif a is None:
+                temp.append(b)
+            elif b is None:
+                temp.append(a)
+            else:
+                temp.append(max(a, b))
+        return Shape(temp)
 
+    @property
+    def span(self):
+        ''' Returns integer distance between highest/lowest non-open frets'''
+        temp = [i[1] for i in self.list_tuples() if i[1] > 0]
+        try: return max(temp) - min(temp)
+        except ValueError: return 0
 
-class Guitarist():
-    ''' The Guitarist is responsible for reading a Song, and producing
-    an Arrangement by guiding a Hand along the easiest route through
-    the possible shapes of the musical objects it contains. '''
-    def __init__(self, song=None):
-        self.arr = Arrangement()
-        if song:
-            self.song = song
-            self.path = self.read(song)
-            try:
-                durations = (n.duration for n in self.song.notes)
-                temp = [(a,b) for a,b in zip(self.path, durations)]
-            except TypeError:
-                temp = None
-            self.arr = Arrangement(notes=temp)
+    def list_frets(self):
+        ''' Returns a fret-list, e.g. [None, 0, 0, 2, 3, 2]'''
+        return self.shape
 
-    def read(self, song, DELTA=3):
-        ''' This gradually pieces a song together via play(),
-        to mitigate exponential complexity.'''
-        path = []
-        # Play first three notes, and select best starting shape
-        passage = Song(song.notes[:DELTA])
-        shape = self.play(passage)
-        path.append(shape[0])
-        # Repeat in three-note sections, building off previous results
-        for i in range(1, len(song)-DELTA):
-            passage = Song([path[-1], *song.notes[i:i+DELTA+1]])
-            shape = self.play(passage)
-            path.append(shape[0])
-        # Add final notes
-        for i in shape[1:]:
-            path.append(i)
-        return path
-
-    def play(self, song):
-        ''' This is a shortest path algorithm, using possible shapes as
-        path nodes, and a combination of Hand.strain and Hand.move
-        difficulty as its path lengths. '''
-        if len(song.notes) == 1:
-            return [song.notes[0].shape]
-        best_score = None
-        best_path = None
-        paths = [note.shapes for note in song.notes]
-        for path in it.product(*paths):
-            score = 0
-            h = Hand()
-            for shape in path:
-                score += h.move(shape)
-                score += h.strain
-            try:
-                if score < best_score:
-                    best_score = score
-                    best_path = path
-            except TypeError:
-                best_score = score
-                best_path = path
-        return best_path
+    def list_tuples(self):
+        ''' Returns a list of tuples: [(string, fret), ...]'''
+        return [(s, f) for s, f in enumerate(self.shape) if f is not None]
 
 
 if __name__ == '__main__':
+
     pass

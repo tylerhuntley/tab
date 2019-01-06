@@ -1,11 +1,12 @@
 import unittest
-from detect_lines import StaffDetector
+from detect import StaffDetector
 
 # KEY = {'line': 5, 'kumbayah': 10, 'star': 15, 'sleeves': 20, 'rosita': 35}
 # Doubled key values for edged images
 NUM_STAFF_LINES = {'blank': 120, 'line': 10, 'kumbayah': 20, 'star': 30, 'sleeves': 40, 'rosita': 70}
 NUM_STAFFS = {'blank': 12, 'line': 1, 'kumbayah': 2, 'star': 3, 'sleeves': 4, 'rosita': 7}
 EXCLUDE = {'rosita'}
+
 
 class TestStaffLines(unittest.TestCase):
     def setUp(self):
