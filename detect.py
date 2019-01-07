@@ -50,6 +50,11 @@ class Detector():
             plt.imshow(img)
         plt.show()
 
+    def subarray(self, image, corners):
+        ''' Return image subarray bounded by box corners: (x0, y0, x1, y1)'''
+        (x0, y0, x1, y1) = corners
+        return image[y0:y1, x0:x1]
+
 
 class StaffDetector(Detector):
     def __init__(self, name, TEST=False):
@@ -75,6 +80,11 @@ class StaffDetector(Detector):
 
         self.show_boxes()
 #        self.show_lines()
+
+        # Move on to phase 2: bar detection, (maybe go straight to notes?)
+        self.staffs = []
+        for n, lines, box in zip(range(100), self.staff_lines, self.large_boxes):
+            self.staffs.append(TestDetector(self, n, lines, box))
 
     def __repr__(self):
         return f"StaffDetector('{self.name}')"
@@ -181,10 +191,15 @@ class StaffDetector(Detector):
         temp[-1][3] += boxes[-1][1] - temp[-1][1]
         return [tuple(i) for i in temp]
 
-    def slice_staff(self, corners):
-        ''' Return image subarray bounded by given coordinates'''
-        (min_x, min_y, max_x, max_y) = corners
-        return self.image[min_y:max_y, min_x:max_x]
+class TestDetector(Detector):
+    def __init__(self, parent, n, lines, box):
+        self.parent = parent
+        self.n = n
+        self.lines = lines
+        self.box = box
+        self.image = self.subarray(self.parent.image, box)
+        self.gray = self.subarray(self.parent.gray, box)
+        self.edges = self.subarray(self.parent.edges, box)
 
 
 if __name__ == '__main__':
