@@ -6,9 +6,6 @@ standard nomenclature of printed sheet music.
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from time import time
-import itertools
-import pickle
 import os
 
 CWD = os.getcwd()
@@ -18,28 +15,12 @@ class Detector():
     image_path = 'static/'
     data_path = 'data/'
 
-    def load_data(self):
-        return np.load(os.path.join(CWD, self.data_path, self.name))
-
-    def save_data(self):
-        path = os.path.join(CWD, self.data_path)
-        if not os.path.exists(path):
-            os.makedirs(path)  # Ensure directory exists
-        with open(os.path.join(path, self.name), 'wb') as f:
-            pickle.dump(self.line_data, f)
-
     @staticmethod
     def detect_edges(img, sigma=0.33):
         mean = np.mean(img)
         lower = int(max(0, (1 - sigma) * mean))
         upper = int(min(255, (1 + sigma) * mean))
         return cv2.Canny(img, lower, upper)
-
-    @staticmethod
-    def detect_lines(img, param, min_length, max_gap):
-        rho, theta = 1, np.pi/180
-        return cv2.HoughLinesP(img, rho, theta, threshold=param,
-                               minLineLength=min_length, maxLineGap=max_gap)
 
     def draw_lines(self, img, lines, color=(255, 0, 0)):
         ''' Draw lines on img in color, default red'''
@@ -79,91 +60,54 @@ class StaffDetector(Detector):
             self.image_name = f'{name}.png'
         self.image = cv2.imread(self.image_name)
         self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        self.edges = self.detect_edges(self.gray)
+        self.edges = cv2.Sobel(self.gray, ddepth=cv2.CV_8U, dx=0, dy=1, ksize=3)
 
-        self.line_data ={}
-        if TEST:
-            # Load data, if available
-            try:
-                self.line_data = self.load_data()
-            # Generate data, if needed
-            except FileNotFoundError:
-                self.line_data = {}
-                self.probe_range()  # Default range for baseline data
-                self.save_data()
-
-        # This part will need to choose parameters on its own
+        # Detect stafflines
         self.staff_boxes = []
         self.staff_views = []
-        self.probe_image(190, 95)
-        lines = self.line_data[(190, 95)]  # Common param taken from testing
-        for staff in self.group_staffs(lines):
+        self.lines = self.hough_lines(self.edges)
+        for staff in self.group_staffs(self.lines):
             box = self.get_bounding_box(staff)
             self.staff_boxes.append(box)
 
-        self.small_boxes = self.staff_boxes[:]  # For debug purposes
+        self.small_boxes = self.staff_boxes[:]
         self.expand_staff_boxes()
         for box in self.staff_boxes:
             view = self.slice_staff(box)
             self.staff_views.append(view)
 
-#        self.staff_subplots()
-        self.draw_boxes()
+        self.show_boxes()
+        self.show_lines()
 
     def __repr__(self):
         return f"StaffDetector('{self.name}')"
 
-    def staff_subplots(self):
-        ''' Display staffs in subplots of one plt.figure (bit awkward) '''
-        fig = plt.figure()
-        fig.suptitle(self.name, fontsize=20)
-        for i, view in enumerate(self.staff_views):
-            fig.add_subplot(len(self.staff_views), 1, i+1)
-            plt.title(f'Staff #{i+1}', loc='left')
-            plt.axis('off')
-            plt.imshow(view)
-        fig.show()
-
-    def draw_boxes(self):
+    def show_boxes(self):
         ''' Highlight detected staffs with red borders (much cleaner)
         small_boxes: as initially detected, staff_boxes: after expansion '''
         fig = plt.figure()
         fig.suptitle(f'Staffs detected in {self.name}.png', fontsize=20)
         img = self.image.copy()
         for a, b in zip(self.small_boxes, self.staff_boxes):
-            self.draw_box(img, a)
             self.draw_box(img, b, color=(0, 255, 0))
+            self.draw_box(img, a)
         plt.imshow(img)
         fig.show()
 
-    def probe_image(self, param, max_gap):
-        ''' Add a parameter set and its associated lines to image dataset '''
-        min_length = int(self.image.shape[1] * 0.5)
-        # Don't repeat detection with duplicate parameters
-        if (param, max_gap) not in self.line_data:
-            lines = self.detect_lines(self.edges, param, min_length, max_gap)
-            lines = self.filter_lines(lines)
-            # NoneType has no len(), so use empty tuples for 0 lines instead
-            self.line_data[(param, max_gap)] = () if lines is None else lines
+    def show_lines(self):
+        fig = plt.figure()
+        fig.suptitle(f'Lines detected in {self.name}.png', fontsize=20)
+        img = self.image.copy()
+        self.draw_lines(img, self.lines)
+        plt.imshow(img)
+        fig.show()
 
-    def probe_range(self, params=range(0, 200, 10), gaps=range(0, 100, 5)):
-        ''' Probe a range of detection parameters to help find correct lines'''
-        # For timing purposes
-        count = 0
-        start = time()
-        last = start
-
-        # Total number of combinations to try
-        cycles = len(params) * len(gaps)
-        for (param, max_gap) in itertools.product(params, gaps):
-            self.probe_image(param, max_gap)
-
-            # Timing info
-            count += 1
-            now = time()
-            print('{}, cycle {} of {}: {:.2f} us, Total: {:.2f} s'.format(
-                    self.name, count, cycles, (now - last)*1000, now - start))
-            last = now
+    def hough_lines(self, image):
+        ''' Detect lines in image using the probabilistic Hough transform '''
+        hough = cv2.HoughLinesP(image, rho=1, theta=np.pi/360, threshold=400,
+                               minLineLength=int(self.image.shape[1] * 0.6),
+                               maxLineGap=int(self.image.shape[1] / 12))
+        return self.filter_lines(hough)
 
     def filter_lines(self, lines):
         temp = []
@@ -228,26 +172,6 @@ class StaffDetector(Detector):
         ''' Return image subarray bounded by given coordinates'''
         (min_x, min_y, max_x, max_y) = corners
         return self.image[min_y:max_y, min_x:max_x]
-
-    def get_params(self, n):
-        '''Return a list of the params that detect exactly n lines'''
-        params = []
-        for param, lines in self.line_data.items():
-            if len(lines) == n:
-                params.append(param)
-        return params
-
-    def get_closest_params(self, n):
-        result = []
-        # Count the number of lines detected by each set of params
-        counts = [len(i) for i in self.line_data.values() if i is not None]
-        counts.sort()
-        # Return the n params that detect the lowest number of lines
-        for k, v in self.line_data.items():
-            if v is not None and len(v) in counts[:n]:
-                result.append(k)
-                print(f'{self.name}: {k} -> {len(v)}')
-        return result
 
 
 if __name__ == '__main__':
