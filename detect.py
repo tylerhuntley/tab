@@ -6,6 +6,7 @@ standard nomenclature of printed sheet music.
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools as it
 import os
 
 CWD = os.getcwd()
@@ -52,7 +53,8 @@ class Detector():
 
     def subarray(self, image, corners):
         ''' Return image subarray bounded by box corners: (x0, y0, x1, y1)'''
-        (x0, y0, x1, y1) = corners
+        try: (x0, y0, x1, y1) = corners
+        except ValueError: return
         return image[y0:y1, x0:x1]
 
 
@@ -77,6 +79,10 @@ class StaffDetector(Detector):
             box = self.get_bounding_box(staff)
             self.small_boxes.append(box)
         self.large_boxes = self.expand_boxes(self.small_boxes)
+
+        # Store average size of staffs, for note fitting
+        sizes = [abs(box[3] - box[1]) for box in self.small_boxes]
+        self.staff_size = int(np.mean(sizes))
 
         self.show_boxes()
 #        self.show_lines()
@@ -191,6 +197,7 @@ class StaffDetector(Detector):
         temp[-1][3] += boxes[-1][1] - temp[-1][1]
         return [tuple(i) for i in temp]
 
+
 class TestDetector(Detector):
     def __init__(self, parent, n, lines, box):
         self.parent = parent
@@ -200,6 +207,25 @@ class TestDetector(Detector):
         self.image = self.subarray(self.parent.image, box)
         self.gray = self.subarray(self.parent.gray, box)
         self.edges = self.subarray(self.parent.edges, box)
+
+        self.note_size = int(self.parent.staff_size / 4)
+        q = cv2.imread('template/Q.png', cv2.IMREAD_GRAYSCALE)
+        scale = self.note_size / q.shape[0]
+        self.q = cv2.resize(q, None, fx=scale, fy=scale, )
+
+        self.notes = self.find_notes()
+
+    def find_notes(self):
+        matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
+        thresh = np.max(matches) * (1 - 1.5 * np.std(matches))
+        notes = matches > thresh
+        copy = np.copy(self.image)
+        for y, x in it.product(range(notes.shape[0]), range(notes.shape[1])):
+            if notes[y,x]:
+                loc = (int(x + self.note_size/2), int(y + self.note_size/2))
+                cv2.circle(copy, loc, self.note_size, (0, 0, 255))
+        self.plot(copy)
+        return notes
 
 
 if __name__ == '__main__':
