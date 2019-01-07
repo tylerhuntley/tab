@@ -77,7 +77,7 @@ class StaffDetector(Detector):
             self.staff_views.append(view)
 
         self.show_boxes()
-        self.show_lines()
+#        self.show_lines()
 
     def __repr__(self):
         return f"StaffDetector('{self.name}')"
@@ -127,14 +127,26 @@ class StaffDetector(Detector):
                 temp.remove(b)
         return tuple(temp)
 
-    def group_staffs(self, lines, count=5):
+    def group_staffs(self, lines):
         ''' Return list of lists containing the lines of each staff entity
-        Currently just counts out groups of a pre-determined size.
-        Will probably want to use dynamic grouping of some kind, KNN?'''
+        Enforces a maximum of double the median line distance within groups'''
+        if len(lines) == 0: return [[]]
+        lines = sorted(lines, key=lambda x: (x[1]+x[3])/2)
+        # Measure line spacing (from the center) and determine threshold
+        spacing = []
+        for a, b in zip(lines[:-1], lines[1:]):
+            spacing.append(int((b[1]+b[3])/2 - (a[1]+a[3])/2))
+        thresh = 2 * np.median(spacing)
+        # Start new group when spacing gets too large
         staffs = []
-        sorted_lines = sorted(lines, key=lambda x: x[1])  # Sort by y1
-        for i in range(0, len(lines), count):
-            staffs.append(sorted_lines[i:i + count])
+        temp = [lines[0]]
+        for line, dist in zip(lines[1:], spacing):
+            if dist < thresh:
+                temp.append(line)
+            else:
+                staffs.append(temp[:])
+                temp = [line]
+        staffs.append(temp)
         return staffs
 
     def get_bounding_box(self, array_lines):
