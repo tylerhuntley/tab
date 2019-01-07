@@ -11,7 +11,7 @@ Matplotlib, for displaying the results of various stages of the program
 Linux and Windows environments should both work, but MacOS has not been tested.
 
 ## Progress
-Currently, a given image can be isolated into individual staffline regions for separate processing, with moderate accuracy.
+Currently, a given image can be separated into individual staffline regions, and the presence and location of notes can be identified within them, with moderate accuracy.
 
 A manually selected group of notes can be arranged into a statically playable shape, if possible.
 
@@ -20,4 +20,6 @@ A series of notes can be arranged into a dynamically playable pattern, taking in
 A series of fretboard locations can be transcribed into tablature, preserving as much timing info as possible, although some is always lost with tab compared to proper sheet music.
 
 ## Use
-detect.py will automatically try to detect stafflines in any .png images in its directory, and display the results in a plot with boxes drawn around the areas of interest, red around the staff itself, green around an expanded area to capture notes that extend beyond its limits. Simpler/cleaner images have a much higher success rate.
+detect.py will automatically process any .png images in its directory. It will display the results in a plot with a red box drawn around the immediate boundary of each staff, green boxes around each staffs overall area of influence, and a blue circle around any notes identified. Accuracy is greater with higher resolution images and full length staffs, i.e. individual bars/measures often fail entirely.
+
+test_detect.py will do the same for the images in the 'static/' directory of the repo.

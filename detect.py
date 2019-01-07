@@ -12,9 +12,44 @@ import os
 CWD = os.getcwd()
 
 
-class Detector():
-    image_path = 'static/'
-    data_path = 'data/'
+class Controller():
+    def __init__(self, name, TEST=False):
+        self.name = name
+        if TEST:
+            self.image_name = os.path.join('static', f'{name}.png')
+        else:
+            self.image_name = f'{name}.png'
+        self.main = StaffDetector(self.image_name)
+
+        self.copy = np.copy(self.main.image)
+#        self.show_lines(self.copy)
+        self.show_boxes(self.copy)
+        self.show_notes(self.copy)
+        self.plot(self.copy)
+
+    def show_lines(self, img, color=(255, 0, 0)):
+        for line in self.main.lines:
+            (x1, y1, x2, y2) = line
+            cv2.line(img, (x1, y1), (x2, y2), color, 3)
+
+    def show_boxes(self, img):
+        ''' Highlight detected staffs with red borders (much cleaner)
+        small_boxes: as initially detected, staff_boxes: after expansion '''
+        for a, b in zip(self.main.small_boxes, self.main.large_boxes):
+            box_a = (a[:2], a[2:])
+            box_b = (b[:2], b[2:])
+            cv2.rectangle(img, *box_b, (0, 255, 0))  # Green around large_boxes
+            cv2.rectangle(img, *box_a, (255, 0, 0))  # Red around small_boxes
+
+    def show_notes(self, img):
+        for staff in self.main.staffs:
+            H, W = staff.notes.shape[:2]
+            radius = staff.note_size
+            for y, x in it.product(range(H), range(W)):
+                if staff.notes[y, x]:
+                    loc = np.add((x, y), staff.origin)
+                    loc = tuple(np.add(loc, (int(staff.note_size/2),)*2))
+                    cv2.circle(img, loc, radius, (0, 0, 255))
 
     @staticmethod
     def detect_edges(img, sigma=0.33):
@@ -23,50 +58,22 @@ class Detector():
         upper = int(min(255, (1 + sigma) * mean))
         return cv2.Canny(img, lower, upper)
 
-    def draw_lines(self, img, lines, color=(255, 0, 0)):
-        ''' Draw lines on img in color, default red'''
-        for line in lines:
-            (x1, y1, x2, y2) = line
-            cv2.line(img, (x1, y1), (x2, y2), color, 2)
-
-    def draw_box(self, img, points, color=(255,0,0)):
-        ''' Draw a rectangle on img, default color red
-        points is the coordinates of opposite corners: (x0, y0, x1, y1)'''
-        lines = []
-        try: x0, y0, x1, y1 = points
-        except ValueError: return
-        lines.append((x0, y0, x1, y0))
-        lines.append((x1, y0, x1, y1))
-        lines.append((x1, y1, x0, y1))
-        lines.append((x0, y1, x0, y0))
-        self.draw_lines(img, lines, color)
-
     @staticmethod
     def plot(img, gray=False):
         ''' Display image in a matplotlib plot window'''
-        plt.plot()
+        fig = plt.figure()
         if gray:
             plt.imshow(img, 'gray')
         else:
             plt.imshow(img)
-        plt.show()
-
-    def subarray(self, image, corners):
-        ''' Return image subarray bounded by box corners: (x0, y0, x1, y1)'''
-        try: (x0, y0, x1, y1) = corners
-        except ValueError: return
-        return image[y0:y1, x0:x1]
+        fig.show()
 
 
-class StaffDetector(Detector):
-    def __init__(self, name, TEST=False):
+class StaffDetector():
+    def __init__(self, name):
         # Pre-process image
         self.name = name
-        if TEST:
-            self.image_name = os.path.join(self.image_path, f'{name}.png')
-        else:
-            self.image_name = f'{name}.png'
-        self.image = cv2.imread(self.image_name)
+        self.image = cv2.imread(name)
         self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         self.edges = cv2.Sobel(self.gray, ddepth=cv2.CV_8U, dx=0, dy=1, ksize=3)
 
@@ -84,36 +91,13 @@ class StaffDetector(Detector):
         sizes = [abs(box[3] - box[1]) for box in self.small_boxes]
         self.staff_size = int(np.mean(sizes))
 
-        self.show_boxes()
-#        self.show_lines()
-
-        # Move on to phase 2: bar detection, (maybe go straight to notes?)
+        # Move on to phase 2: note detection
         self.staffs = []
         for n, lines, box in zip(range(100), self.staff_lines, self.large_boxes):
-            self.staffs.append(TestDetector(self, n, lines, box))
+            self.staffs.append(NoteDetector(self, n, lines, box))
 
     def __repr__(self):
         return f"StaffDetector('{self.name}')"
-
-    def show_boxes(self):
-        ''' Highlight detected staffs with red borders (much cleaner)
-        small_boxes: as initially detected, staff_boxes: after expansion '''
-        fig = plt.figure()
-        fig.suptitle(f'Staffs detected in {self.name}.png', fontsize=20)
-        img = self.image.copy()
-        for a, b in zip(self.small_boxes, self.large_boxes):
-            self.draw_box(img, b, color=(0, 255, 0))
-            self.draw_box(img, a)
-        plt.imshow(img)
-        fig.show()
-
-    def show_lines(self):
-        fig = plt.figure()
-        fig.suptitle(f'Lines detected in {self.name}.png', fontsize=20)
-        img = self.image.copy()
-        self.draw_lines(img, self.lines)
-        plt.imshow(img)
-        fig.show()
 
     def hough_lines(self, image):
         ''' Detect lines in image using the probabilistic Hough transform '''
@@ -198,15 +182,15 @@ class StaffDetector(Detector):
         return [tuple(i) for i in temp]
 
 
-class TestDetector(Detector):
+class NoteDetector():
     def __init__(self, parent, n, lines, box):
         self.parent = parent
         self.n = n
         self.lines = lines
         self.box = box
+        self.origin = (min(box[0], box[2]), min(box[1], box[3]))  # (x, y)
         self.image = self.subarray(self.parent.image, box)
         self.gray = self.subarray(self.parent.gray, box)
-        self.edges = self.subarray(self.parent.edges, box)
 
         self.note_size = int(self.parent.staff_size / 4)
         q = cv2.imread('template/Q.png', cv2.IMREAD_GRAYSCALE)
@@ -218,18 +202,17 @@ class TestDetector(Detector):
     def find_notes(self):
         matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
         thresh = np.max(matches) * (1 - 1.5 * np.std(matches))
-        notes = matches > thresh
-        copy = np.copy(self.image)
-        for y, x in it.product(range(notes.shape[0]), range(notes.shape[1])):
-            if notes[y,x]:
-                loc = (int(x + self.note_size/2), int(y + self.note_size/2))
-                cv2.circle(copy, loc, self.note_size, (0, 0, 255))
-        self.plot(copy)
-        return notes
+        return matches > thresh
+
+    def subarray(self, image, corners):
+        ''' Return image subarray bounded by box corners: (x0, y0, x1, y1)'''
+        try: (x0, y0, x1, y1) = corners
+        except ValueError: return
+        return image[y0:y1, x0:x1]
 
 
 if __name__ == '__main__':
     detectors = []
     for filename in os.listdir():
         if filename[-4:] == '.png':  # There is a better way to do this
-            detectors.append(StaffDetector(filename[:-4]))
+            detectors.append(Controller(filename[:-4]))
