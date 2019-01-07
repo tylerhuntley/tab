@@ -45,7 +45,7 @@ class Detector():
         ''' Draw lines on img in color, default red'''
         for line in lines:
             (x1, y1, x2, y2) = line
-            cv2.line(img, (x1, y1), (x2, y2), color, 1)
+            cv2.line(img, (x1, y1), (x2, y2), color, 2)
 
     def draw_box(self, img, points, color=(255,0,0)):
         ''' Draw a rectangle on img, default color red
@@ -97,7 +97,7 @@ class StaffDetector(Detector):
         self.staff_views = []
         self.probe_image(190, 95)
         lines = self.line_data[(190, 95)]  # Common param taken from testing
-        for staff in self.separate_staffs(lines):
+        for staff in self.group_staffs(lines):
             box = self.get_bounding_box(staff)
             self.staff_boxes.append(box)
 
@@ -142,6 +142,7 @@ class StaffDetector(Detector):
         # Don't repeat detection with duplicate parameters
         if (param, max_gap) not in self.line_data:
             lines = self.detect_lines(self.edges, param, min_length, max_gap)
+            lines = self.filter_lines(lines)
             # NoneType has no len(), so use empty tuples for 0 lines instead
             self.line_data[(param, max_gap)] = () if lines is None else lines
 
@@ -164,14 +165,32 @@ class StaffDetector(Detector):
                     self.name, count, cycles, (now - last)*1000, now - start))
             last = now
 
-    def separate_staffs(self, lines):
+    def filter_lines(self, lines):
+        temp = []
+        if lines is None: return ()
+        for line in lines.tolist():
+            x1, y1, x2, y2 = line[0]
+            try:
+                slope = abs((y2 - y1) / (x2 - x1))
+                if slope < 0.01:
+                    temp.append(line[0])
+            except ZeroDivisionError:
+                continue
+        temp.sort(key=lambda x: x[1])
+        # Remove duplicates
+        for a, b in zip(temp[:-1], temp[1:]):
+            if abs(a[1] - b[1]) < 5:
+                temp.remove(b)
+        return tuple(temp)
+
+    def group_staffs(self, lines, count=5):
         ''' Return list of lists containing the lines of each staff entity
-        Currently just counts ten at a time, not five due to edging
+        Currently just counts out groups of a pre-determined size.
         Will probably want to use dynamic grouping of some kind, KNN?'''
         staffs = []
-        sorted_lines = sorted(lines, key=lambda x: x[0][1])  # Sort by y1
-        for i in range(0, len(lines), 10):
-            staffs.append(sorted_lines[i:i + 10])
+        sorted_lines = sorted(lines, key=lambda x: x[1])  # Sort by y1
+        for i in range(0, len(lines), count):
+            staffs.append(sorted_lines[i:i + count])
         return staffs
 
     def get_bounding_box(self, array_lines):
@@ -179,7 +198,7 @@ class StaffDetector(Detector):
         lines is a list of 4-tuples of the form (x1, y1, x2, y2)
         Currently ignores everything outside the stafflines themselves
         Will need to expand to account for ledger lines'''
-        lines = [line[0] for line in array_lines]  # np.arrays come nested
+        lines = [line for line in array_lines]  # np.arrays come nested
         min_x = min(min(line[0], line[2]) for line in lines)
         max_x = max(max(line[0], line[2]) for line in lines)
         min_y = min(min(line[1], line[3]) for line in lines)
