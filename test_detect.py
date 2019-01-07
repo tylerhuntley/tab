@@ -16,15 +16,12 @@ class TestStaffs(unittest.TestCase):
 
     def test_staff_counts(self):
         for test in tests:
-            self.assertEqual(len(test.staff_views), NUM_STAFFS[test.name])
-            for view in test.staff_views:
-                # Empty views are surely wrong, but how to test CORRECTNESS?
-                self.assertGreater(view.size, 0)
+            self.assertEqual(len(test.staff_lines), NUM_STAFFS[test.name])
 
     def test_staff_continuity(self):
         ''' Bottom of each staff box must align with the top of the next'''
         for test in tests:
-            for a, b in zip(test.staff_boxes[:-1], test.staff_boxes[1:]):
+            for a, b in zip(test.large_boxes[:-1], test.large_boxes[1:]):
                 self.assertEqual(a[3], b[1])
 
 

@@ -32,7 +32,8 @@ class Detector():
         ''' Draw a rectangle on img, default color red
         points is the coordinates of opposite corners: (x0, y0, x1, y1)'''
         lines = []
-        x0, y0, x1, y1 = points
+        try: x0, y0, x1, y1 = points
+        except ValueError: return
         lines.append((x0, y0, x1, y0))
         lines.append((x1, y0, x1, y1))
         lines.append((x1, y1, x0, y1))
@@ -63,18 +64,14 @@ class StaffDetector(Detector):
         self.edges = cv2.Sobel(self.gray, ddepth=cv2.CV_8U, dx=0, dy=1, ksize=3)
 
         # Detect stafflines
-        self.staff_boxes = []
-        self.staff_views = []
+        self.small_boxes = []
+        self.staff_lines = []
         self.lines = self.hough_lines(self.edges)
         for staff in self.group_staffs(self.lines):
+            self.staff_lines.append(staff)
             box = self.get_bounding_box(staff)
-            self.staff_boxes.append(box)
-
-        self.small_boxes = self.staff_boxes[:]
-        self.expand_staff_boxes()
-        for box in self.staff_boxes:
-            view = self.slice_staff(box)
-            self.staff_views.append(view)
+            self.small_boxes.append(box)
+        self.large_boxes = self.expand_boxes(self.small_boxes)
 
         self.show_boxes()
 #        self.show_lines()
@@ -88,7 +85,7 @@ class StaffDetector(Detector):
         fig = plt.figure()
         fig.suptitle(f'Staffs detected in {self.name}.png', fontsize=20)
         img = self.image.copy()
-        for a, b in zip(self.small_boxes, self.staff_boxes):
+        for a, b in zip(self.small_boxes, self.large_boxes):
             self.draw_box(img, b, color=(0, 255, 0))
             self.draw_box(img, a)
         plt.imshow(img)
@@ -149,36 +146,40 @@ class StaffDetector(Detector):
         staffs.append(temp)
         return staffs
 
-    def get_bounding_box(self, array_lines):
+    def get_bounding_box(self, lines):
         ''' Return corner coordinates of rectangle surrounding given lines
         lines is a list of 4-tuples of the form (x1, y1, x2, y2)
         Currently ignores everything outside the stafflines themselves
         Will need to expand to account for ledger lines'''
-        lines = [line for line in array_lines]  # np.arrays come nested
-        min_x = min(min(line[0], line[2]) for line in lines)
-        max_x = max(max(line[0], line[2]) for line in lines)
-        min_y = min(min(line[1], line[3]) for line in lines)
-        max_y = max(max(line[1], line[3]) for line in lines)
-        return (min_x, min_y, max_x, max_y)
+        try:
+            min_x = min(min(line[0], line[2]) for line in lines)
+            max_x = max(max(line[0], line[2]) for line in lines)
+            min_y = min(min(line[1], line[3]) for line in lines)
+            max_y = max(max(line[1], line[3]) for line in lines)
+            return (min_x, min_y, max_x, max_y)
+        except ValueError:
+            return ()
 
-    def expand_staff_boxes(self):
-        ''' Stretch adajcent staff boxes together to capture ledger lines '''
+    def expand_boxes(self, boxes):
+        ''' Stretch adajcent staff boxes together to capture ledger lines
+        Return list of new expanded bounding box coordinates'''
         # Single staffs need to be expanded blindly. Can maybe improve this.
-        if len(self.staff_boxes) == 1:
-            x1, y1, x2, y2 = self.staff_boxes[0]
-            self.staff_boxes = [(x1, y1 - (y2 - y1), x2, y2 + (y2 - y1))]
-            return
-
+        if len(boxes) == 1:
+            try:
+                x1, y1, x2, y2 = boxes[0]
+                return [(x1, y1 - (y2 - y1), x2, y2 + (y2 - y1))]
+            except ValueError:
+                return [()]
         # Multiple staffs are made contiguous, to avoid gaps in coverage
-        temp = [list(i) for i in self.staff_boxes]
+        temp = [list(i) for i in boxes]
         for top, bot in zip(temp[:-1], temp[1:]):
             mid = int((top[3] + bot[1]) / 2)  # Bring midlines together
             top[3] = mid
             bot[1] = mid
         # Move neigborless top/bottom limits equivalent symmetrical amounts
-        temp[0][1] -= temp[0][3] - self.staff_boxes[0][3]
-        temp[-1][3] += self.staff_boxes[-1][1] - temp[-1][1]
-        self.staff_boxes = [tuple(i) for i in temp]
+        temp[0][1] -= temp[0][3] - boxes[0][3]
+        temp[-1][3] += boxes[-1][1] - temp[-1][1]
+        return [tuple(i) for i in temp]
 
     def slice_staff(self, corners):
         ''' Return image subarray bounded by given coordinates'''
