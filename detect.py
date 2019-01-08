@@ -198,11 +198,37 @@ class NoteDetector():
         self.q = cv2.resize(q, None, fx=scale, fy=scale, )
 
         self.notes = self.find_notes()
+        self.chord_groups = self.group_chords(self.notes)
 
     def find_notes(self):
         matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
         thresh = np.max(matches) * (1 - 1.5 * np.std(matches))
         return matches > thresh
+
+    def group_chords(self, array):
+        ''' Takes a boolean array representing presence of a note at [y, x]
+        Returns a list of lists of note coordinates, [[(x,y), ...], ...],
+        with each sublist group containing simultaneous notes, i.e. a chord '''
+        # Extract coordinates from array
+        notes = []
+        for y, x in it.product(range(array.shape[0]), range(array.shape[1])):
+            if array[y, x] and (x, y) not in notes:
+                notes.append((x, y))
+        if len(notes) == 0:
+            return [[]]
+        notes.sort()
+
+        # Group points by x-proximity, indicating simultanaeity
+        groups = []
+        temp = [notes[0]]
+        for note in notes[1:]:
+            if abs(note[0] - temp[-1][0]) <= self.note_size:
+                temp.append(note)
+            else:
+                groups.append(temp)
+                temp = [note]
+        groups.append(temp)
+        return groups
 
     def subarray(self, image, corners):
         ''' Return image subarray bounded by box corners: (x0, y0, x1, y1)'''
@@ -216,3 +242,5 @@ if __name__ == '__main__':
     for filename in os.listdir():
         if filename[-4:] == '.png':  # There is a better way to do this
             detectors.append(Controller(filename[:-4]))
+
+    Controller.plot(detectors[0].main.staffs[0].notes)

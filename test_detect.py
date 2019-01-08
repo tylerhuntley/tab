@@ -1,5 +1,6 @@
 import unittest
-from detect import Controller
+import numpy as np
+import detect
 
 NUM_STAFFS = {'line': 1, 'kumbayah': 2, 'ignite': 3, 'star': 3,
               'sleeves': 4, 'romance': 6, 'rosita': 7, 'blank': 12}
@@ -25,10 +26,30 @@ class TestStaffs(unittest.TestCase):
                 self.assertEqual(a[3], b[1])
 
 
+class TestNotes(unittest.TestCase):
+    def setUp(self):
+        class Dummy(detect.NoteDetector):
+            def __init__(self):
+                self.note_size = 1
+        self.d = Dummy()
+
+    def test_null_chord_groups(self):
+        arr = np.zeros([1,6])
+        self.assertEqual(self.d.group_chords(arr), [[]])
+
+    def test_one_note_chord_groups(self):
+        arr = np.array([[0,1,0,0,1,0]])
+        self.assertEqual(self.d.group_chords(arr), [[(1,0)], [(4,0)]])
+
+    def test_two_note_chord_groups(self):
+        arr = np.array([[0,1,0,0,1,0], [0,0,0,0,0,0], [0,1,0,0,1,0]])
+        self.assertEqual(self.d.group_chords(arr), [[(1,0), (1,2)], [(4,0), (4,2)]])
+
+
 if __name__ == '__main__':
     tests = {}
     for name in NUM_STAFFS:
         if name not in EXCLUDE:
-            tests[name] = Controller(name, TEST=True)
+            tests[name] = detect.Controller(name, TEST=True)
 
     unittest.main()
