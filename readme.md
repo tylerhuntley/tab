@@ -1,6 +1,8 @@
 # tab
 An attempt at parsing sheet music for guitar using computer vision. The goal of this project is two-fold. First, an image of a page of sheet music (for guitar) is processed using the OpenCV computer vision library to ultimately generate an ordered list of musical notes. These notes are then arranged into usable fretboard locations, seeking to maximize playability for a solo guitarist, and transcribed into tablature format.
 
+<img src="https://github.com/tylerhuntley/tab/blob/master/sample/sample.png">
+
 ## Dependencies
 Python 3.7, plus three external libraries, are required to use this project:
 ```
@@ -23,3 +25,4 @@ A series of fretboard locations can be transcribed into tablature, preserving as
 detect.py will automatically process any .png images in its directory. It will display the results in a plot with a red box drawn around the immediate boundary of each staff, green boxes around each staffs overall area of influence, and a blue circle around any notes identified. Accuracy is greater with higher resolution images and full length staffs, i.e. individual bars/measures often fail entirely.
 
 test_detect.py will do the same for the images in the 'static/' directory of the repo.
+
