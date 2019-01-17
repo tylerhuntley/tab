@@ -197,13 +197,21 @@ class NoteDetector():
         scale = self.note_size / q.shape[0]
         self.q = cv2.resize(q, None, fx=scale, fy=scale, )
 
-        self.notes = self.find_notes()
+        note_blobs = self.find_notes()
+        self.notes = self.filter_local_maxima(note_blobs, self.note_size)
         self.chord_groups = self.group_chords(self.notes)
 
     def find_notes(self):
         matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
         thresh = np.max(matches) * (1 - 1.5 * np.std(matches))
-        return matches > thresh
+        return np.where(matches > thresh, matches, 0)
+
+    def filter_local_maxima(self, array, ksize):
+        ''' Sharpen relative peaks of array to a single local maximum
+        within each ksize * ksize neighborhood '''
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (ksize, ksize))
+        dilated = cv2.dilate(array, kernel)
+        return np.where(dilated == array, array, 0)
 
     def group_chords(self, array):
         ''' Takes a boolean array representing presence of a note at [y, x]
