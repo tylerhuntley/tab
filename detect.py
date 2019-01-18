@@ -21,6 +21,11 @@ class Controller():
             self.image_name = f'{name}.png'
         self.main = StaffDetector(self.image_name)
 
+        # Calculate overlay sizing info
+        self.radius = int(np.mean([s.note_size for s in self.main.staffs]))
+        self.boldness = max(1, int(self.radius / 4))
+
+        # Draw overlays and display image
         self.copy = np.copy(self.main.image)
 #        self.show_lines(self.copy)
         self.show_boxes(self.copy)
@@ -30,7 +35,7 @@ class Controller():
     def show_lines(self, img, color=(255, 0, 0)):
         for line in self.main.lines:
             (x1, y1, x2, y2) = line
-            cv2.line(img, (x1, y1), (x2, y2), color, 3)
+            cv2.line(img, (x1, y1), (x2, y2), color, self.boldness)
 
     def show_boxes(self, img):
         ''' Highlight detected staffs with red borders (much cleaner)
@@ -38,17 +43,17 @@ class Controller():
         for a, b in zip(self.main.small_boxes, self.main.large_boxes):
             box_a = (a[:2], a[2:])
             box_b = (b[:2], b[2:])
-            cv2.rectangle(img, *box_b, (0, 255, 0))  # Green around large_boxes
-            cv2.rectangle(img, *box_a, (255, 0, 0))  # Red around small_boxes
+            cv2.rectangle(img, *box_b, (0, 255, 0), self.boldness)  # Green around large_boxes
+            cv2.rectangle(img, *box_a, (255, 0, 0), self.boldness)  # Red around small_boxes
 
     def show_notes(self, img):
         for staff in self.main.staffs:
             H, W = staff.notes.shape[:2]
-            radius = staff.note_size
+#            radius = staff.note_size
             for y, x in it.product(range(H), range(W)):
                 if staff.notes[y, x]:
                     loc = tuple(np.add((x, y), staff.origin))
-                    cv2.circle(img, loc, radius, (0, 0, 255))
+                    cv2.circle(img, loc, self.radius, (0,0,255), self.boldness)
 
     @staticmethod
     def detect_edges(img, sigma=0.33):
