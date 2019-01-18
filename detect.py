@@ -47,8 +47,7 @@ class Controller():
             radius = staff.note_size
             for y, x in it.product(range(H), range(W)):
                 if staff.notes[y, x]:
-                    loc = np.add((x, y), staff.origin)
-                    loc = tuple(np.add(loc, (int(staff.note_size/2),)*2))
+                    loc = tuple(np.add((x, y), staff.origin))
                     cv2.circle(img, loc, radius, (0, 0, 255))
 
     @staticmethod
@@ -204,7 +203,11 @@ class NoteDetector():
     def find_notes(self):
         matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
         thresh = np.max(matches) * (1 - 1.5 * np.std(matches))
-        return np.where(matches > thresh, matches, 0)
+        # Shift matches, to locate centerpoint instead of top-left corner
+        offset = int(self.note_size/2)
+        points = np.zeros(matches.shape)
+        points[offset:, offset:] = matches[:-offset, :-offset]
+        return np.where(points > thresh, points, 0)
 
     def filter_local_maxima(self, array, ksize):
         ''' Sharpen relative peaks of array to a single local maximum
