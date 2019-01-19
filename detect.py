@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
 import os
+import music
 
 CWD = os.getcwd()
 
@@ -201,9 +202,16 @@ class NoteDetector():
         scale = self.note_size / q.shape[0]
         self.q = cv2.resize(q, None, fx=scale, fy=scale, )
 
+        # Find and group notes
         note_blobs = self.find_notes()
         self.notes = self.filter_local_maxima(note_blobs, self.note_size)
         self.chord_groups = self.group_chords(self.notes)
+
+        # Assign names to found notes
+        key = (min(i[1] for i in self.lines) - self.origin[1],
+               max(i[1] for i in self.lines) - self.origin[1])
+        named_groups = [self.name_notes(i, key) for i in self.chord_groups]
+        self.chords = [music.Chord([*chord]) for chord in named_groups]
 
     def find_notes(self):
         matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
@@ -245,6 +253,28 @@ class NoteDetector():
                 temp = [note]
         groups.append(temp)
         return groups
+
+    def name_notes(self, points, key):
+        ''' Converts a list of (x, y) coordinate values into named Notes
+        key should contain top/bottom staffline y-values, for F5 and E4 '''
+        e4 = max(key)
+        f5 = min(key)
+        step = (e4 - f5) / 8
+        c4 = e4 + int(2 * step)
+        names = []
+        for point in points:
+            steps = round((point[1] - c4) / step)
+            if steps == 0:
+                names.append(music.Note('C4'))
+                continue
+            # Probably want to link these to the music module
+            elif steps > 0: scale = 'BAGFEDC'
+            elif steps < 0: scale = 'DEFGABC'
+            for i, _ in zip(it.cycle(scale), range(abs(steps))):
+                name = i
+            octave = str(3 - ((steps-1) // 7))  # Octaves increment at C
+            names.append(music.Note(name + octave))
+        return names
 
     def subarray(self, image, corners):
         ''' Return image subarray bounded by box corners: (x0, y0, x1, y1)'''

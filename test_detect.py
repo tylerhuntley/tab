@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import detect
+import music
 
 NUM_STAFFS = {'line': 1, 'kumbayah': 2, 'ignite': 3, 'star': 3,
               'sleeves': 4, 'romance': 6, 'rosita': 7, 'blank': 12}
@@ -44,6 +45,13 @@ class TestNotes(unittest.TestCase):
     def test_two_note_chord_groups(self):
         arr = np.array([[0,1,0,0,1,0], [0,0,0,0,0,0], [0,1,0,0,1,0]])
         self.assertEqual(self.d.group_chords(arr), [[(1,0), (1,2)], [(4,0), (4,2)]])
+
+    def test_note_naming(self):
+        points = [(0,-110), (0,0), (0,20), (0,30), (0,70), (0,140)]
+        key = (0, 80)
+        names = self.d.name_notes(points, key)
+        notes = [music.Note(i) for i in ('C7', 'F5', 'D5', 'C5', 'F4', 'F3')]
+        self.assertEqual(names, notes)
 
 
 if __name__ == '__main__':
