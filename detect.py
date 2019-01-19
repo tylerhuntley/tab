@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
 import os
-import music
+import music, player
 
 CWD = os.getcwd()
 
@@ -32,6 +32,15 @@ class Controller():
         self.show_boxes(self.copy)
         self.show_notes(self.copy)
         self.plot(self.copy)
+
+        # Construct Song and transcribe into tablature
+        self.song = music.Song()
+        for staff in self.main.staffs:
+            for chord in staff.chords:
+                self.song.add(chord)
+        self.arr = player.Guitarist(self.song).arr
+        print(f'{self.name}:\n{self.arr}')
+
 
     def show_lines(self, img, color=(255, 0, 0)):
         for line in self.main.lines:

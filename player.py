@@ -187,7 +187,8 @@ class Guitarist():
         for i in range(1, len(song)-DELTA):
             passage = music.Song([path[-1], *song.notes[i:i+DELTA+1]])
             shape = self.play(passage)
-            path.append(shape[0])
+            try: path.append(shape[0])
+            except TypeError: continue  # Ignore notes out of range
         # Add final notes
         for i in shape[1:]:
             path.append(i)
