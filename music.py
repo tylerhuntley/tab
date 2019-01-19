@@ -46,6 +46,12 @@ class Pitch():
     def __repr__(self):
         return f"Note('{self.name}') - Value: {self.value}"
 
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __hash__(self):
+        return self.value
+
     def __add__(self, other):
         try:
             return self.__class__(self.value + other)  # adding ints, +1 per semitone
@@ -119,6 +125,12 @@ class Note(Pitch):
         super().__init__(pitch)
         self.duration = duration  # Default to quarter notes
 
+    def __eq__(self, other):
+        return self.value == other.value and self.duration == other.duration
+
+    def __hash__(self):
+        return self.value
+
 
 class Chord():
     ''' A Chord is a set of concurrent Notes. Its duration is equal to that
@@ -135,6 +147,7 @@ class Chord():
                 self.notes.append(note)
             else:
                 self.notes.append(Note(note, duration))
+        self.notes.sort()
 
         # Store shortest note duration as own
         self.duration = min(note.duration for note in self.notes)
@@ -150,6 +163,12 @@ class Chord():
 
     def __repr__(self):
         return str([note.name for note in sorted(self.notes)])
+
+    def  __eq__(self, other):
+        return self.notes == other.notes
+
+    def __hash__(self):
+        return tuple(self.notes)
 
     @ property
     def shape(self):
