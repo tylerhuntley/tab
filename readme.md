@@ -21,12 +21,12 @@ A manually selected group of notes can be arranged into a statically playable sh
 
 A series of fretboard locations can be transcribed into tablature, preserving as much timing info as possible, although some is always lost with tab compared to proper sheet music.
 
-Images can be directly transcribed into tablature, although overall accuracy is poor. Time signatures are ignored entirely, and all found notes are assumed to be straight quarter notes. The detector also often fails to detect every note, and may detect notes that don't exist. Naturally, these are included in the transcription anyway.
+Images can be directly transcribed into tablature, although overall accuracy is poor. Chosen fingerings are not always sensible, and the timing is all wrong; every note is assumed to be a straight quarter note, and time signatures are ignored entirely. The detector also often fails to detect every note present, and may detect notes that don't exist. Naturally, these are included in the transcription anyway.
 
 <img src="https://github.com/tylerhuntley/tab/blob/master/sample/transcription.png">
 
 ## Use
-detect.py will automatically process any .png images in its directory. It will plot detection results in a figure, then print its transcription to the terminal, which should be run in interactive mode, i.e. 'python -i detect.py'. Accuracy of detection, although incomplete, is greater with higher resolution images and full length staffs. Transcription accuracy remains poor.
+detect.py will attempt to process any .png images in its directory. It will display detection results in a matplotlib figure, then print its transcription to the terminal, which should be run in interactive mode, i.e. 'python -i detect.py'. Accuracy of detection, although incomplete, is greater with higher resolution images with full length staffs. Transcription accuracy remains poor.
 
 test_detect.py will do the same for the images in the 'static/' directory of the repo.
 

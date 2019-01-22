@@ -6,7 +6,8 @@ import music
 NUM_STAFFS = {'line': 1, 'kumbayah': 2, 'ignite': 3, 'star': 3,
               'sleeves': 4, 'romance': 6, 'rosita': 7, 'blank': 12}
 NUM_LINES = {name: NUM_STAFFS[name] * 5 for name in NUM_STAFFS}
-EXCLUDE = {'blank'}
+#NUM_STAFFS = {'blank': 12}
+EXCLUDE = {''}
 
 
 class TestStaffs(unittest.TestCase):

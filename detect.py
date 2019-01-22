@@ -220,11 +220,13 @@ class NoteDetector():
         key = (min(i[1] for i in self.lines) - self.origin[1],
                max(i[1] for i in self.lines) - self.origin[1])
         named_groups = [self.name_notes(i, key) for i in self.chord_groups]
-        self.chords = [music.Chord([*chord]) for chord in named_groups]
+        try: self.chords = [music.Chord([*chord]) for chord in named_groups]
+        except ValueError: self.chords = []
 
     def find_notes(self):
         matches= cv2.matchTemplate(self.gray, self.q, cv2.TM_CCOEFF_NORMED)
         thresh = np.max(matches) * (1 - 1.5 * np.std(matches))
+        matches = np.where(matches < 0.5, 0, matches)
         # Shift matches, to locate centerpoint instead of top-left corner
         offset = int(self.note_size/2)
         points = np.zeros(matches.shape)
